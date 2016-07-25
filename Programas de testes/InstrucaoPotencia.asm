@@ -3,20 +3,18 @@
 	
 	resFinal: 
 			.word 0
-	res: 
-		.word 0
 	
 	.pseg
-	li $numero, 2
-	li $elevado, 4
-	li $cont, 1
-	move $res, $x
+	li $s0, 2 ;base
+	li $s1, 4 ;potencia
+	li $s2, 1 ;contador
+	move $t0, $s0
 	
 
-	Loop: beq, $cont, $elevado, Endfor
-	mul $res, $res, $numero
-	add $cont, $cont, 1
+	Loop: beq, $s2, $s1, Endfor
+	mul $t0, $t0, $s0
+	add $s2, $s2, 1
 	j Loop
-	Endfor: sw resFinal, $res
+	Endfor: sw resFinal, $t0
 	
 .end

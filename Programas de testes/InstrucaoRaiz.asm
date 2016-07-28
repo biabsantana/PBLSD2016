@@ -6,17 +6,17 @@
 	
 	.pseg
 	li $s0, 16 ;raiz
-	li $s1, 0 ;indice
+	li $s1, 1; ;so para comparacao
 	li $s2, 0 ;contador
 	li $t0, 0 ;resultado parcial
 	li $t1, 0 ;verificador
 
 	
 	Loop: slt $t1, $s0, 1 ;verifica se o resultado parcial é menor do que 1
-	beq $t1, 1 Endfor ;caso seja menor do que 1 vai pro final do loop
-	mul $s2, $s2, 2 ;indice * 2 + 1
-	add $s2, $s2, 1
-	sub $t0, $s0, $s2 ;raiz - indice
+	beq $t1, $s1 Endfor ;caso seja menor do que 1 vai pro final do loop
+	mul $t0, $s2, 2 ;indice * 2 + 1
+	add $t0, $t0, 1
+	sub $s0, $s0, $t0 ;raiz - indice
 	add $s2, $s2, 1 ;adiciona 1 ao contador
 	j Loop
 	Endfor: sw resFinal, $s2

@@ -15,6 +15,6 @@
 	mul $t0, $t0, $s0
 	add $s2, $s2, 1
 	j Loop
-	Endfor: sw resFinal, $t0
+	Endfor: sw $t0, resFinal
 	
 .end

@@ -19,7 +19,7 @@
 	sub $s0, $s0, $t0 ;raiz - indice
 	add $s2, $s2, 1 ;adiciona 1 ao contador
 	j Loop
-	Endfor: sw resFinal, $s2
+	Endfor: sw $s2, resFinal
 	
 .end
 

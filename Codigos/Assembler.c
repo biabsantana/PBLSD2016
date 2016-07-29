@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include <string.h>
 #include "uthash.h"
+#include <math.h>
 
 //Functions declarations-------------------------------------------------------------------------------------------------
 int assemblyChoice();
@@ -25,12 +26,13 @@ int checksAssembly();
 void informError(int code, int lineNumber);
 int verifyAndTranslate();
 char* checkData(char *line);
-char* checkInstruction(char line[]);
+char* checkInstruction(char line[], int currentAddress);
 char* getMnemonic(char instruction[]);
 char* completeBinary(int numberOfBits, char binary[]);
-char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, char type, char *opcode, char *function);
+char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, char type, char *opcode, char *function , int currentAddress);
 void concatBinary(int binaryIndex, int nBits, char binary[], char param[]);
 void writeOnFile();
+int getBinaryRange(int nBits, char signal);
 //-----------------------------------------------------------------------------------------------------------------------
 
 //Hash created to save the assembly code labels and the processor registers.
@@ -104,7 +106,6 @@ void main()
                 if(fileError == 1){
                     //Calculates the program memory usage in Bytes
                     float memoryUsageB = ((numberOfData + numberOfInstructions)*4);
-                    printf("\n-------------------------------------------------------------------------------------------------------------------");
                     printf("\nPROGRAM ASSEMBLED\n");
                     printf("Number of instructions: %d\nNumber of data: %d\nMemory usage: %.4fKB\n", numberOfInstructions, numberOfData, memoryUsageB/1024);
                     writeOnFile();
@@ -135,7 +136,7 @@ int assemblyChoice()
     int lineNumber = 1;
     FILE *file = NULL;
 
-    printf("---------------------------------TEC499 - ASSEMBLER---------------------------------\n\n");
+    printf("TEC499 - ASSEMBLER\n\n");
 
     //Gets the file name
     printf("Into the .asm name: ");
@@ -182,11 +183,20 @@ void addRegister(char key[], int value)
 
 //Get the register code
 char* findRegister(char key[])
-{
+{           
+	while(key[0] == ' ' || key[0] == '\t')
+        key = ++key;
+	
+	int lastIndex = strlen(key) - 1;
+	while(key[lastIndex] == ' ' || key[lastIndex] == '\t'){
+        key[lastIndex] = '\0';
+        lastIndex--;
+	}
+        
     struct hash *r;
     static char buffer[5];
     HASH_FIND_STR(registers, key, r);
-
+	
     if(r != NULL){
         itoa(r->value, buffer, 2);
         if(strlen(buffer) < 5)
@@ -201,17 +211,16 @@ char* findRegister(char key[])
 //Add a label in the labels hash
 void addLabel(char key[], int value)
 {
+    while(key[0] == ' ' || key[0] == '\t')
+        key = ++key;
+        
     struct hash *labl;
     //Verifies if the register already exists on hash
     HASH_FIND_STR(labels, key, labl);
 
     //If not exists, creates.
     if(labl == NULL)
-    {
-        int i = 0;
-        while(key[i] == ' ')
-            key = ++key;
-
+    {       
         labl = (struct hash*)malloc(sizeof(struct hash));
         strncpy(labl->key, key, 100);
         labl->value = value;
@@ -222,6 +231,9 @@ void addLabel(char key[], int value)
 //Get the label code
 char* findLabel(char key[])
 {
+	while(key[0] == ' ' || key[0] == '\t')
+        key = ++key;
+        
     struct hash *lbl;
     static char buffer[16];
     HASH_FIND_STR(labels, key, lbl);
@@ -265,13 +277,91 @@ char* findInstruction(char mnemonic[])
 void createInstructions()
 {
     /// Data format: [0] - Type(R, I or J), [1] - Number of registers, [2] - number of constants, [3] - labels
-    addInstruction("add", "R300000000000000");
-    addInstruction("sub", "R300000000000001");
-    addInstruction("mul", "R300000000000010");
-    addInstruction("li", "I110000001");
-    addInstruction("beq", "I201000010");
-    addInstruction("j", "J001000011");
-    addInstruction("sw", "I101000100");
+    
+	//R - instructions------------------------------------
+	//Arithmetic
+    addInstruction("add",  "R300000000000001");
+    addInstruction("addu", "R300000000000010");
+    addInstruction("clz",  "R200000000000011");
+    addInstruction("clo",  "R200000000000100");
+    addInstruction("move", "R200000000000101");
+    addInstruction("negu", "R200000000000110");
+    addInstruction("sub",  "R300000000000111");
+    addInstruction("subu", "R300000000001000");
+    addInstruction("seh",  "R200000000001001");
+    addInstruction("seb",  "R200000000001010");
+    //Logic
+    addInstruction("and",  "R300000000001011");
+    addInstruction("nor",  "R300000000001100");
+    addInstruction("not",  "R200000000001101");
+    addInstruction("or",   "R300000000001110");
+    addInstruction("xor",  "R300000000001111");
+    //Multiplication and Division
+    addInstruction("div",  "R300000000010000");
+    addInstruction("divu", "R300000000010001");
+    addInstruction("madd", "R200000000010010");
+    addInstruction("maddu","R200000000010011");
+    addInstruction("msub", "R200000000010100");
+    addInstruction("msubu","R200000000010101");
+    addInstruction("mul",  "R300000000010110");
+    addInstruction("mult", "R200000000010111");
+    //Shift and Rotate
+    addInstruction("sll",  "R210000000011000");
+    addInstruction("sllv", "R300000000011001");
+    addInstruction("srl",  "R210000000011010");
+    addInstruction("sra",  "R210000000011011");
+    addInstruction("srav", "R300000000011100");
+    addInstruction("srlv", "R300000000011101");
+    addInstruction("rotr", "R210000000011110");
+    addInstruction("rotrv","R300000000011111");
+    //Conditionals and move
+    addInstruction("slt",  "R300000000100000");
+    addInstruction("sltu", "R300000000100001");
+    addInstruction("movn", "R300000000100010");
+    addInstruction("movz", "R300000000100011");
+    //Acc access
+    addInstruction("mfhi", "R100000000100100");
+    addInstruction("mflo", "R100000000100101");
+    addInstruction("mthi", "R100000000100110");
+    addInstruction("mtlo", "R100000000100111");
+    //Branches and jump
+    addInstruction("jr",   "R100000000101000");
+    addInstruction("jalr", "R200000000101001");
+    
+    //I - instructions------------------------------------
+    //Arithmetic
+    addInstruction("addi",  "I210000001");
+    addInstruction("addiu", "I210000010");
+    addInstruction("la",    "I101000011");
+    addInstruction("li",    "I110000100");
+    addInstruction("lui",   "I110000101");
+    //Logic
+    addInstruction("andi",  "I210000110");
+    addInstruction("ori",   "I210000111");
+    addInstruction("xori",  "I210001000");
+    //Multiplication and Division
+	addInstruction("multu", "I110001001");
+	//Conditionals and move
+	addInstruction("slti",  "I210001010");
+	addInstruction("sltiu", "I210001011");
+	//Branches and jump
+	addInstruction("beq",   "I201001100");
+	addInstruction("beqz",  "I101001101");
+	addInstruction("bne",   "I201001110");
+	addInstruction("bnez",  "I101001111");
+	//Load and store
+	addInstruction("lb",    "I210010010");
+	addInstruction("lw",    "I210010011");
+	addInstruction("lh",    "I210010100");
+	addInstruction("sb",    "I210010101");
+	addInstruction("sh",    "I210010110");
+	addInstruction("sw",    "I210010111");
+	
+	//J - instructions------------------------------------
+	//Branches and jump
+	addInstruction("j",     "J001010000");
+	addInstruction("jal",   "J001010001");
+    
 
 }
 
@@ -537,6 +627,11 @@ int checksAssembly()
             }
             //If is .dseg
             else if(directiveCode == 2){
+            	if(pseg == 0){
+            		informError(6, lineNumber);
+            		fclose(file);
+                	return 1;
+				}
                 pseg = 0;
                 dseg = 1;
             }
@@ -612,6 +707,8 @@ void informError(int code, int lineNumber)
         printf("\n-> ERROR(4): WORD DECLARATION ON .pseg - Line %d",lineNumber);
     else if(code == 5)
         printf("\n-> ERROR(5): INSTRUCTION ON .dseg - Line %d",lineNumber);
+    else if(code == 6)
+        printf("\n-> ERROR(15): .dseg CAN'T STAY BEFORE .pseg - Line %d",lineNumber);
 
 }
 
@@ -620,6 +717,7 @@ int verifyAndTranslate()
 {
     struct command *com, *aux;
     char result[32];
+    int currentAddress = 0;
 
     com = (struct command*)malloc(sizeof(struct command));
     com = first;
@@ -629,7 +727,11 @@ int verifyAndTranslate()
             //printf("\n\nDado: (%s)",com->line);
             strcpy(com->line, checkData(com->line));
             if(strcmp(com->line, "0") == 0){
-                printf("\n-> ERROR(9): INVALID VARIABLE - Line %d", com->lineNumber);
+                printf("\n-> ERROR(6): INVALID VALUE - Line %d", com->lineNumber);
+                return 0;
+            }
+            if(strcmp(com->line, "1") == 0){
+                printf("\n-> ERROR(7): VALUE OVERFLOW - Line %d", com->lineNumber);
                 return 0;
             }
             //printf("\n%s (%d bits)\n",com->line, strlen(com->line));
@@ -637,42 +739,48 @@ int verifyAndTranslate()
         //Instruction
         else{
             //printf("\n\nInstrucao: (%s)",com->line);
-            strcpy(com->line, checkInstruction(com->line));
+            strcpy(com->line, checkInstruction(com->line, currentAddress));
             if(strcmp(com->line, "1") == 0){
-                printf("\n-------------------------------------------------------------------------------------------------------------------");
                 printf("\nPROGRAM NOT ASSEMBLED");
-                printf("\n-> ERROR(6): INVALID REGISTER - Line %d", com->lineNumber);
+                printf("\n-> ERROR(8): INVALID REGISTER - Line %d", com->lineNumber);
                 return 0;
             }
             else if(strcmp(com->line, "2") == 0){
-                printf("\n-------------------------------------------------------------------------------------------------------------------");
                 printf("\nPROGRAM NOT ASSEMBLED");
-                printf("\n-> ERROR(7): INVALID LABEL - Line %d", com->lineNumber);
+                printf("\n-> ERROR(9): INVALID LABEL - Line %d", com->lineNumber);
                 return 0;
             }
             else if(strcmp(com->line, "3") == 0){
-                printf("\n-------------------------------------------------------------------------------------------------------------------");
                 printf("\nPROGRAM NOT ASSEMBLED");
-                printf("\n-> ERROR(8): INVALID CONSTANT - Line %d", com->lineNumber);
+                printf("\n-> ERROR(10): INVALID CONSTANT - Line %d", com->lineNumber);
                 return 0;
             }
             else if(strcmp(com->line, "4") == 0){
-                printf("\n-------------------------------------------------------------------------------------------------------------------");
                 printf("\nPROGRAM NOT ASSEMBLED");
-                printf("\n-> ERROR(10): INVALID MNEMONIC - Line %d", com->lineNumber);
+                printf("\n-> ERROR(11): INVALID MNEMONIC - Line %d", com->lineNumber);
                 return 0;
             }
 
             else if(strcmp(com->line, "5") == 0){
-                printf("\n-------------------------------------------------------------------------------------------------------------------");
                 printf("\nPROGRAM NOT ASSEMBLED");
-                printf("\n-> ERROR(11): MISSING PARAMETERS - Line %d", com->lineNumber);
+                printf("\n-> ERROR(12): MISSING PARAMETERS - Line %d", com->lineNumber);
+                return 0;
+            }
+            else if(strcmp(com->line, "6") == 0){
+                printf("\nPROGRAM NOT ASSEMBLED");
+                printf("\n-> ERROR(13): CONSTANT OVERFLOW - Line %d", com->lineNumber);
+                return 0;
+            }
+            else if(strcmp(com->line, "7") == 0){
+                printf("\nPROGRAM NOT ASSEMBLED");
+                printf("\n-> ERROR(14): ONLY UNSIGNED CONSTANT - Line %d", com->lineNumber);
                 return 0;
             }
 
             //printf("\n%s (%d bits)\n",com->line, strlen(com->line));
         }
         com = com->next;
+        currentAddress++;
     }
     return 1;
 }
@@ -697,21 +805,23 @@ char* checkData(char *line)
     //If the value is wrong
     if(valueSize == 0 || (value == 0 && aux[0] != '0' && valueSize > 0))
         return "0";
+	//Value overflow
+    if(value > getBinaryRange(31, '+') || value < getBinaryRange(31, '-'))
+    	return "1";
 
     //Converts to binary
     itoa(value, aux, 2);
     strncpy(aux,completeBinary(32, aux), 32);
 
-    //Define the opcode 111111
-    for(value = 0; value < 6; value++)
-        aux[value] = '1';
+    //Define msb = 1
+    aux[0] = '1';
     aux[32] = '\0';
 
     return aux;
 }
 
 //Checks if the instruction is valid
-char* checkInstruction(char line[])
+char* checkInstruction(char line[], int currentAddress)
 {
     static char command[50], opcode[6];
     char data[16], function[6];
@@ -746,7 +856,7 @@ char* checkInstruction(char line[])
             function[i] = data[i+10];
         function[i] ='\0';
     }
-    return mountBinary(command, nRegisters, nConstants, nLabels, type, opcode, function);
+    return mountBinary(command, nRegisters, nConstants, nLabels, type, opcode, function, currentAddress);
 }
 
 //Get the instruction mnemonic.
@@ -785,7 +895,7 @@ char* completeBinary(int numberOfBits, char binary[])
 }
 
 //Translate the instruction to binary
-char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, char type, char *opcode, char *function)
+char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, char type, char *opcode, char *function, int currentAddress)
 {
     int i = 0, j = 0, nRegsAux = 0, nConstAux = 0, nLabAux = 0;
     static char binary[32];
@@ -813,7 +923,7 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
         //If the char is comma or it is the instruction final
         if(instruction[i] == ',' || i == strlen(instruction) - 1){
             param[j] = '\0';
-
+            
             //If the parameter is a register
             if(nRegisters != nRegsAux){
                 isRegister = 1;
@@ -838,6 +948,25 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 
             //Operation for register
             if(isRegister == 1){
+            	
+            	//To load and store
+            	char copy[10];
+            	
+            	//Load and Store
+            	if(nRegsAux == 2 && (strcmp(opcode, "010010") == 0 || strcmp(opcode, "010011") == 0
+				 || strcmp(opcode, "010100") == 0 || strcmp(opcode, "010101") == 0 || 
+				 strcmp(opcode, "010110") == 0 || strcmp(opcode, "010111") == 0) )
+				{ 
+					strcpy(copy, param);
+					
+            		strcpy(param, strchr(param, '$'));
+            		param[strlen(param) - 1] = '\0';   
+					isRegister = 0;
+                	isLabel = 0;
+                	isConstant = 1;
+               	    nConstAux++;	
+				}
+            	
                 //Find the register code
                 strcpy(param, findRegister(param));
                 //If is not exists
@@ -851,33 +980,83 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
                     concatBinary(11, 5, binary, param);
                 else if(nRegsAux == 3)
                     concatBinary(16, 5, binary, param);
+                
+                //To load and store
+                if(isConstant == 1){
+                	strcpy(param, copy);
+                	strcpy(param, strchr(strrev(param), '('));
+					strcpy(param, strrev(strchr(param, param[1])));
+					while(param[0] == ' ' || param[0] == '\t')
+						strcpy(param, strchr(param, param[1]));	
+				}
 
             }
             //Operation for label
             else if(isLabel == 1){
+
                 //Find the label code
                 strcpy(param, findLabel(param));
+                				
                 //If is not valid
                 if(strcmp(param, "NULL") == 0)
                     return "2";
+                
+				//Branchs instructions   
+                if(strcmp(opcode, "001100") == 0 || strcmp(opcode, "001101") == 0
+				|| strcmp(opcode, "001110") == 0 || strcmp(opcode, "001111") == 0)
+				{ 
+						int labelAddress = atoi(param);
+						itoa(labelAddress - currentAddress, param, 2);
+						strcpy(param, completeBinary(16, param));
+				}
 
                 //Push on correct position
                 concatBinary(16, 16, binary, param);
             }
             //Operation for constant
-            else if(isConstant == 1){
-                //Convert to integer
+            if(isConstant == 1){
+            	//Convert to integer
                int constValue = atoi(param);
+               
                 //Verify if is valid
-               if(constValue == 0 && param[0] != 0)
+               if(constValue == 0 && param[0] != '0')
                     return "3";
-                //Converts to binary and push to instruction
-               char constant[16];
-               itoa(constValue, constant, 2);
-               strcpy(constant, completeBinary(16, constant));
-               concatBinary(16, 16, binary, constant);
-            }
+               
+			   if(type != 'R'){
+			   		
+			   		//Unsigned instructions
+			   		if(strcmp(opcode, "000010") == 0 || strcmp(opcode, "000101") == 0
+					|| strcmp(opcode, "001001") == 0 || strcmp(opcode, "001011") == 0)
+					{ 
+						if(constValue < 0)
+							return "7";
+						if(constValue > getBinaryRange(17, '+'))
+							return "6";
 
+					}
+					//Signed
+					else{
+				   	   if(constValue > getBinaryRange(16, '+') || constValue < getBinaryRange(16, '-'))
+				   	  	 return "6";
+		        	}
+		        	 //Converts to binary and push to instruction
+		            char constant[16];
+		            itoa(constValue, constant, 2);
+		            strcpy(constant, completeBinary(16, constant));
+		            concatBinary(16, 16, binary, constant);
+	           }
+	           else{
+	           	
+	           	   if(constValue > getBinaryRange(5, '+') || constValue < getBinaryRange(5, '-'))
+			   	  	 	return "6";
+			   	  	 	
+	           		//Shamt
+	               char constant[5];
+	               itoa(constValue, constant, 2);
+	               strcpy(constant, completeBinary(5, constant));
+	               concatBinary(21, 5, binary, constant);
+			   }
+            }
             param[0] = '\0';
             j = 0;
         }
@@ -889,10 +1068,8 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
         return "5";
 
     //Place the shamt and function on binary
-    if(type == 'R'){
-        concatBinary(21, 5, binary, "00000");
-        concatBinary(26, 5, binary, function);
-    }
+    if(type == 'R')
+        concatBinary(26, 6, binary, function);
 
     binary[32] = '\0';
     return binary;
@@ -922,9 +1099,21 @@ void writeOnFile()
     com = first;
     while(com != NULL){
         fputs(com->line, file);
-        fputc('\n', file);
         com = com->next;
+        if(com != NULL)
+            fputc('\n', file);
     }
     fclose(file);
 }
 
+//Takes the binary range
+int getBinaryRange(int nBits, char signal)
+{
+	nBits--;
+	if(signal == '+')
+		return pow(2,nBits) -1;
+	else if(signal == '-')
+		return pow(2,nBits)*(-1);
+	return 0;
+	
+}

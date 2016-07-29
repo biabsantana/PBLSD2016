@@ -813,8 +813,6 @@ char* checkData(char *line)
     itoa(value, aux, 2);
     strncpy(aux,completeBinary(32, aux), 32);
 
-    //Define msb = 1
-    aux[0] = '1';
     aux[32] = '\0';
 
     return aux;
@@ -1092,12 +1090,19 @@ void writeOnFile()
 {
     FILE *file;
 	file = fopen("binary.txt", "w");
+	char numbers[32];
 
 	struct command *com, *aux;
     com = (struct command*)malloc(sizeof(struct command));
-
+		
+	//Puts the number of instruction and data in two first lines of the file
+	itoa(numberOfInstructions, numbers, 2);
+	strcpy(numbers, completeBinary(32, numbers));
+	fputs(numbers, file);
+	fputc('\n', file);
     com = first;
     while(com != NULL){
+    	printf("*%s*\n", com->line);
         fputs(com->line, file);
         com = com->next;
         if(com != NULL)

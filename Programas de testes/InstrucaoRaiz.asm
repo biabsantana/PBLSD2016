@@ -1,8 +1,4 @@
 .module calculo_potencia
-	.dseg
-	
-	resFinal: 
-			.word 0
 	
 	.pseg
 	li $s0, 16 ;raiz
@@ -12,7 +8,7 @@
 	li $t1, 0 ;verificador
 
 	
-	Loop: slt $t1, $s0, 1 ;verifica se o resultado parcial é menor do que 1
+	Loop: slti $t1, $s0, 1 ;verifica se o resultado parcial é menor do que 1
 	beq $t1, $s1 Endfor ;caso seja menor do que 1 vai pro final do loop
 	mul $t0, $s2, 2 ;indice * 2 + 1
 	add $t0, $t0, 1
@@ -21,6 +17,9 @@
 	j Loop
 	Endfor: sw $s2, resFinal
 	
+	.dseg
+	resFinal: 
+			.word 0
 .end
 
 

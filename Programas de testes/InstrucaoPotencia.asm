@@ -1,8 +1,4 @@
 .module calculo_potencia
-	.dseg
-	
-	resFinal: 
-			.word 0
 	
 	.pseg
 	li $s0, 2 ;base
@@ -17,4 +13,8 @@
 	j Loop
 	Endfor: sw $t0, resFinal
 	
+	.dseg
+	resFinal: 
+			.word 0
+			
 .end

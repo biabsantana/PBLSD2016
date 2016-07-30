@@ -13,13 +13,14 @@ int memory[16384];
 //General purpose registers
 int GPR[32];
 //The next memory address to program
-unsigned int program_memory = 0;
-//Base register to data memory
-unsigned int dBaseRegister = 0;
+unsigned int next_free_address = 0;
 //Program Counter register
 unsigned int PC = 0;
 //Instruction register
 int IR = 0;
+//Accumulator registers
+int HI = 0;
+int LO = 0;
 
 void main()
 {
@@ -98,20 +99,20 @@ int callLoader()
         }
         //Checks the number of instructions on program
         if(numberOfInstructions == 0){
-        	dBaseRegister = instruction;
+        	GPR[28] = instruction;
         	numberOfInstructions++;
 		}
         	
 		else{
 			//Put the instruction on memory and increments the next memory address
-        	memory[program_memory] = instruction;
-        	program_memory++;	
+        	memory[next_free_address] = instruction;
+        	next_free_address++;	
 		}
         printf("\n");
     }
     
     //Defines the $sp and $fp address
-    GPR[29] = program_memory;
+    GPR[29] = next_free_address;
     GPR[30] = GPR[29];    
 	fclose(file);
     return 1;
@@ -121,14 +122,14 @@ int callLoader()
 void showMemory()
 {
     int i = 0;
-    float memoryUsage = (program_memory*4);
+    float memoryUsage = (GPR[29]*4);
     printf("\nUSED MEMORY:\t%.4fKB\n----------------------------------\n\tAddress\t\tValue\n", memoryUsage/1024);
-    for(i; i <= program_memory; i++){
+    for(i; i <= next_free_address; i++){
     	if(PC == i)
     		printf("PC ->");
-    	if(dBaseRegister == i && dBaseRegister != PC)
-    		printf("DBR ->");
-    	if(GPR[30] == i && dBaseRegister != GPR[30])
+    	if(GPR[28] == i && GPR[28] != PC)
+    		printf("$gp ->");
+    	if(GPR[30] == i && GPR[28] != GPR[30])
     		printf("$fp ->");
     	if(GPR[29] == i && GPR[30] != GPR[29])
     		printf("$sp ->");
@@ -141,9 +142,9 @@ void showMemory()
 void cleanMemory()
 {
     int i = 0;
-    for(i; i < program_memory; i++)
+    for(i; i < next_free_address; i++)
         memory[i] = 0;
-    program_memory = 0;
+    next_free_address = 0;
 }
 
 //Cleans all processor registers
@@ -154,7 +155,8 @@ void cleanRegisters()
 		GPR[i] = 0;
 	PC = 0;
 	IR = 0;
-	dBaseRegister = 0;
+	HI = 0;
+	LO = 0;
 }
 
 //Execute the program loaded on memory
@@ -162,7 +164,7 @@ int executeProgram()
 {
 	int success = 1;
 	//Executes the program while PC address is a instruction address on memory
-	while(PC != dBaseRegister){
+	while(PC != GPR[28]){
 		//Takes the memory value and puts on IR
 		IR = memory[PC];
 		//Calls the control unit
@@ -235,6 +237,8 @@ int callControlUnit()
 				break;
 		}
 		printf("J - %d %d\n", opcode, address);
-	}	
+	}
+	//TESTE
+	PC++;
 	return 1;
 }

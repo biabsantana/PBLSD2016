@@ -1002,10 +1002,17 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 				//Branchs instructions   
                 if(strcmp(opcode, "001100") == 0 || strcmp(opcode, "001101") == 0
 				|| strcmp(opcode, "001110") == 0 || strcmp(opcode, "001111") == 0)
-				{ 
-						int labelAddress = atoi(param);
+				{ 		
+						int labelAddress = 0, i = 0;
+						for(i; i < 16; i++){
+							if(param[i] == '1')
+								labelAddress++;
+							if(i != 15)
+								labelAddress = labelAddress << 1;
+						}
 						itoa(labelAddress - currentAddress, param, 2);
 						strcpy(param, completeBinary(16, param));
+						
 				}
 
                 //Push on correct position
@@ -1090,19 +1097,17 @@ void writeOnFile()
 {
     FILE *file;
 	file = fopen("binary.txt", "w");
-	char numbers[32];
-
+	char dRegBase[32], strAux[32];
 	struct command *com, *aux;
     com = (struct command*)malloc(sizeof(struct command));
 		
 	//Puts the number of instruction and data in two first lines of the file
-	itoa(numberOfInstructions, numbers, 2);
-	strcpy(numbers, completeBinary(32, numbers));
-	fputs(numbers, file);
+	itoa(numberOfInstructions, dRegBase, 2);
+	strcpy(strAux, completeBinary(32, dRegBase));
+	fputs(strAux, file);
 	fputc('\n', file);
     com = first;
     while(com != NULL){
-    	printf("*%s*\n", com->line);
         fputs(com->line, file);
         com = com->next;
         if(com != NULL)

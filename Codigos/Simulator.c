@@ -7,6 +7,7 @@ void cleanMemory();
 void cleanRegisters();
 int executeProgram();
 int callControlUnit();
+int add();
 
 //The processor memory
 int memory[16384];
@@ -241,4 +242,52 @@ int callControlUnit()
 	//TESTE
 	PC++;
 	return 1;
+}
+
+int add(int value1, int value2){
+	return (value1 + value2); 
+}
+
+unsigned int addu(unsigned int value1, unsigned int value2){
+	return (value1 + value2); 
+}
+
+int clz(int value){
+	int zeros = 0;
+	while(value>0){
+		if(value%10 == 0){
+			zeros++;
+			value = value/10;
+		}
+	}
+	return zeros;
+}
+
+int clo(int value){
+	int ums = 0;
+	while(value>0){
+		if(value%10 == 1){
+			ums++;
+			value = value/10;
+		}
+	}
+	return ums;
+}
+
+//la é feito direto no case
+
+//li é feito direto no case
+
+// LUI $d, c não entendi -------------------------------------------
+
+//move é feito direto no case
+
+//negu é feito direto no case
+
+int sub(int value1, int value2){
+	return (value1 - value2); 
+}
+
+unsigned int subu(unsigned int value1, unsigned int value2){
+	return (value1 - value2); 
 }

@@ -7,9 +7,50 @@ void cleanMemory();
 void cleanRegisters();
 int executeProgram();
 int callControlUnit();
-int add();
 
-//The processor memory
+//------------------ULA OPERATIONS-----------------------------------
+int add(int op1, int op2);
+unsigned int addu(unsigned int op1, unsigned int op2);
+int clz(int op);
+int clo(int op);
+int sub (int op1, int op2);
+unsigned subu (unsigned int op1, unsigned int op2);
+int seh(int op);
+int seb(int op);
+int _and(int op1, int op2);
+int nor(int op1, int op2);
+int _or(int op1, int op2);
+int _xor(int op1, int op2);
+int div(int op1, int op2);
+unsigned int divu(unsigned int op1, unsigned int op2);
+int mult(int op1, int op2);
+unsigned int multu(unsigned int op1, unsigned int op2);
+int sllv(int op1, int op2);
+int srlv(int op1, int op2);
+int srav(int op1, int op2);
+int rotrv(int op1, int op2);
+int slt(int op1, int op2);
+unsigned int sltu(unsigned int op1, unsigned int op2);
+int equal(int op1, int op2);
+//------------------ULA OPERATIONS-----------------------------------
+
+
+//------------------BRANCHS OPERATIONS-------------------------------
+
+//------------------BRANCHS OPERATIONS-------------------------------
+
+
+//------------------LOAD/STORE OPERATIONS----------------------------
+
+//------------------LOAD/STORE OPERATIONS----------------------------
+
+
+//------------------JUMP OPERATIONS-------------------------------
+
+//------------------JUMP OPERATIONS-------------------------------
+
+
+//The processor memory(64KB) with 16384 32-bits address 
 int memory[16384];
 //General purpose registers
 int GPR[32];
@@ -22,6 +63,8 @@ int IR = 0;
 //Accumulator registers
 int HI = 0;
 int LO = 0;
+//Flags: 0 - zero(z), 1 - signal(s), 2 - carry(c), 3 - overflow(o), 4 - parity(p), 
+int flags[5];
 
 void main()
 {
@@ -188,12 +231,12 @@ int callControlUnit()
 		unsigned int function = IR & 63;
 		//Find the R instruction shamt [10...6]
 		unsigned int shamt = (IR >> 6) & 31;
-		//Find the R instruction operand register 2 [15...11]
-		unsigned int reg_op2 = (IR >> 11) & 31;
-		//Find the R instruction operand register 1 [20...16]
-		unsigned int reg_op1 = (IR >> 16) & 31;
-		//Find the R instruction destiny register [25...21]
-		unsigned int reg_dest = (IR >> 21) & 31;
+		//Find the R instruction destiny register [15...11]
+		unsigned int reg_dest = (IR >> 11) & 31;
+		//Find the R instruction operand register 2 [20...16]
+		unsigned int reg_op2 = (IR >> 16) & 31;
+		//Find the R instruction operand register 1[25...21]
+		unsigned int reg_op1 = (IR >> 21) & 31;
 		
 		//Calls the specific instruction with your parameters
 		switch(function){
@@ -202,16 +245,16 @@ int callControlUnit()
 				
 				break;
 		}
-		printf("R - %d %d %d %d %d %d\n", opcode, reg_dest, reg_op1, reg_op2, shamt, function);
+		printf("R - %d %d %d %d %d %d\n", opcode, reg_op1, reg_op2, reg_dest, shamt, function);
 	}
 	//I instruction
 	else if((opcode >= 1 && opcode <= 15) || (opcode >= 18 && opcode <= 23)){
 		//Find the I instruction immediate [15...0]
 		short int constant = IR & 65535;
-		//Find the I instruction operand register [20...16]
-		unsigned int reg_op = (IR >> 16) & 31;
 		//Find the I instruction destiny register [20...16]
-		unsigned int reg_dest = (IR >> 21) & 31;
+		unsigned int reg_dest = (IR >> 16) & 31;
+		//Find the I instruction operand register [25...21]
+		unsigned int reg_op = (IR >> 21) & 31;
 		
 		//Calls the specific instruction with your parameters
 		switch(opcode){
@@ -220,7 +263,7 @@ int callControlUnit()
 				
 				break;
 		}
-		printf("I - %d %d %d %d\n", opcode, reg_dest, reg_op, constant);
+		printf("I - %d %d %d %d\n", opcode, reg_op, reg_dest, constant);
 	}
 	//J instruction
 	else if(opcode == 16 || opcode == 17){
@@ -244,50 +287,46 @@ int callControlUnit()
 	return 1;
 }
 
-int add(int value1, int value2){
-	return (value1 + value2); 
+int add(int op1, int op2)
+{
+	return (op1 + op2); 
 }
 
-unsigned int addu(unsigned int value1, unsigned int value2){
-	return (value1 + value2); 
+unsigned int addu(unsigned int op1, unsigned int op2)
+{
+	return (op1 + op2); 
 }
 
-int clz(int value){
+int clz(int op)
+{
 	int zeros = 0;
-	while(value>0){
-		if(value%10 == 0){
+	while(op>0){
+		if(op%10 == 0){
 			zeros++;
-			value = value/10;
+			op = op/10;
 		}
 	}
 	return zeros;
 }
 
-int clo(int value){
+int clo(int op)
+{
 	int ums = 0;
-	while(value>0){
-		if(value%10 == 1){
+	while(op>0){
+		if(op%10 == 1){
 			ums++;
-			value = value/10;
+			op = op/10;
 		}
 	}
 	return ums;
 }
 
-//la é feito direto no case
-
-//li é feito direto no case
-
-// LUI $d, c não entendi -------------------------------------------
-
-//move é feito direto no case
-
-//negu é feito direto no case
-
-int sub(int value1, int value2){
-	return (value1 - value2); 
+int sub(int op1, int op2)
+{
+	return (op1 - op2); 
 }
 
-unsigned int subu(unsigned int value1, unsigned int value2){
-	return (value1 - value2); 
+unsigned int subu(unsigned int op1, unsigned int op2)
+{
+	return (op1 - op2); 
 }

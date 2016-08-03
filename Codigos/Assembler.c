@@ -1077,26 +1077,33 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 
 	           	   //Shamt, ins and ext
 	               char constant[5];
-	               int size;
+	               int pos, size;
 	               
-	               if(strcmp(name, "ext") == 0 && nConstAux == 1)
+	               if(strcmp(name, "ext") == 0 && nConstAux == 2)
 				   		constValue--;
 	               itoa(constValue, constant, 2);
 	               strcpy(constant, completeBinary(5, constant));
 	               
 	               if(strcmp(name, "ext") == 0 && nConstAux == 1)
+	               		concatBinary(21, 5, binary, constant);
+	               else if(strcmp(name, "ext") == 0 && nConstAux == 2)
 	               		concatBinary(16, 5, binary, constant);
 	               else	if(strcmp(name, "ins") == 0 && nConstAux == 1)
+	               		pos = constValue;
+	                else if(strcmp(name, "ins") == 0 && nConstAux == 2){
 	               		size = constValue;
-	               else{
+	                	int msb = (pos + size) - 1;	               			
+	               		itoa(msb, constant, 2);
+	               		strcpy(constant, completeBinary(5, constant));
+	               		concatBinary(16, 5, binary, constant);
+	               		
+	               		itoa(pos, constant, 2);
+	               		strcpy(constant, completeBinary(5, constant));
 	               		concatBinary(21, 5, binary, constant);
-	               		if(strcmp(name, "ins") == 0 ){
-	               			int msb = (size + constValue) - 1;	               			
-	               			itoa(msb, constant, 2);
-	               			strcpy(constant, completeBinary(5, constant));
-	               			concatBinary(16, 5, binary, constant);
-						}
-				   }
+					}
+	               else
+	               		concatBinary(21, 5, binary, constant);
+				   
 			   }
             }
             param[0] = '\0';

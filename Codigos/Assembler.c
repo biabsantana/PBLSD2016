@@ -280,88 +280,84 @@ void createInstructions()
     
 	//R - instructions------------------------------------
 	//Arithmetic
-    addInstruction("add",  "R300000000000001");
-    addInstruction("addu", "R300000000000010");
-    addInstruction("clz",  "R200000000000011");
-    addInstruction("clo",  "R200000000000100");
-    addInstruction("move", "R200000000000101");
-    addInstruction("negu", "R200000000000110");
-    addInstruction("sub",  "R300000000000111");
-    addInstruction("subu", "R300000000001000");
-    addInstruction("seh",  "R200000000001001");
-    addInstruction("seb",  "R200000000001010");
+    addInstruction("add",  "R300000000100000");
+    addInstruction("addu", "R300000000100001");
+    addInstruction("clz",  "R200011100100000");
+    addInstruction("clo",  "R200011100100001");
+    addInstruction("sub",  "R300000000100010");
+    addInstruction("subu", "R300000000100011");
+	addInstruction("seb",  "R200011111100000");
+	addInstruction("seh",  "R200011111100000");
     //Logic
-    addInstruction("and",  "R300000000001011");
-    addInstruction("nor",  "R300000000001100");
-    addInstruction("not",  "R200000000001101");
-    addInstruction("or",   "R300000000001110");
-    addInstruction("xor",  "R300000000001111");
+    addInstruction("and",  "R300000000100100");
+    addInstruction("nor",  "R300000000100111");
+    addInstruction("wsbh", "R200011111100000");
+    addInstruction("or",   "R300000000100101");
+    addInstruction("xor",  "R300000000100110");
+    addInstruction("ext",  "R220011111000000");
+    addInstruction("ins",  "R220011111000100");
     //Multiplication and Division
-    addInstruction("div",  "R300000000010000");
-    addInstruction("divu", "R300000000010001");
-    addInstruction("madd", "R200000000010010");
-    addInstruction("maddu","R200000000010011");
-    addInstruction("msub", "R200000000010100");
-    addInstruction("msubu","R200000000010101");
-    addInstruction("mul",  "R300000000010110");
-    addInstruction("mult", "R200000000010111");
+    addInstruction("div",  "R200000000011010"); 
+    addInstruction("divu", "R200000000011011"); 
+    addInstruction("madd", "R200011100000000");  
+    addInstruction("maddu","R200011100000001"); 
+    addInstruction("msub", "R200011100000100");
+    addInstruction("msubu","R200011100000101"); 
+    addInstruction("mul",  "R300011100000010");
+    addInstruction("mult", "R200000000011000"); 
+    addInstruction("multu","R200000000011001"); 
     //Shift and Rotate
-    addInstruction("sll",  "R210000000011000");
-    addInstruction("sllv", "R300000000011001");
-    addInstruction("srl",  "R210000000011010");
-    addInstruction("sra",  "R210000000011011");
-    addInstruction("srav", "R300000000011100");
-    addInstruction("srlv", "R300000000011101");
-    addInstruction("rotr", "R210000000011110");
-    addInstruction("rotrv","R300000000011111");
+    addInstruction("sll",  "R210000000000000");
+    addInstruction("sllv", "R300000000000100");
+    addInstruction("srl",  "R210000000000010");
+    addInstruction("sra",  "R210000000000011");
+    addInstruction("srav", "R300000000000111"); 
+    addInstruction("srlv", "R300000000000110");
+    addInstruction("rotr", "R210000000000010");
+    addInstruction("rotrv","R300000000000110");
     //Conditionals and move
-    addInstruction("slt",  "R300000000100000");
-    addInstruction("sltu", "R300000000100001");
-    addInstruction("movn", "R300000000100010");
-    addInstruction("movz", "R300000000100011");
+    addInstruction("slt",  "R300000000101010");
+    addInstruction("sltu", "R300000000101011");
+    addInstruction("movn", "R300000000001011");
+    addInstruction("movz", "R300000000001010");
     //Acc access
-    addInstruction("mfhi", "R100000000100100");
-    addInstruction("mflo", "R100000000100101");
-    addInstruction("mthi", "R100000000100110");
-    addInstruction("mtlo", "R100000000100111");
+    addInstruction("mfhi", "R100000000010000");
+    addInstruction("mflo", "R100000000010010");
+    addInstruction("mthi", "R100000000010001");
+    addInstruction("mtlo", "R100000000010011");
     //Branches and jump
-    addInstruction("jr",   "R100000000101000");
-    addInstruction("jalr", "R200000000101001");
+    addInstruction("jr",   "R100000000001000");
+    addInstruction("jalr", "R200000000001001"); 
     
     //I - instructions------------------------------------
     //Arithmetic
-    addInstruction("addi",  "I210000001");
-    addInstruction("addiu", "I210000010");
-    addInstruction("la",    "I101000011");
-    addInstruction("li",    "I110000100");
-    addInstruction("lui",   "I110000101");
+    addInstruction("addi",  "I210001000");
+    addInstruction("addiu", "I210001001");
+    addInstruction("lui",   "I110001111");
     //Logic
-    addInstruction("andi",  "I210000110");
-    addInstruction("ori",   "I210000111");
-    addInstruction("xori",  "I210001000");
-    //Multiplication and Division
-	addInstruction("multu", "I110001001");
+    addInstruction("andi",  "I210001100");
+    addInstruction("ori",   "I210001101");
+    addInstruction("xori",  "I210001110");	
 	//Conditionals and move
 	addInstruction("slti",  "I210001010");
 	addInstruction("sltiu", "I210001011");
 	//Branches and jump
-	addInstruction("beq",   "I201001100");
-	addInstruction("beqz",  "I101001101");
-	addInstruction("bne",   "I201001110");
-	addInstruction("bnez",  "I101001111");
+	addInstruction("beq",   "I201000100");
+	addInstruction("bgtz",  "I101000111");
+	addInstruction("bne",   "I201000101");
+	addInstruction("bltz",  "I101000001");
 	//Load and store
-	addInstruction("lb",    "I210010010");
-	addInstruction("lw",    "I210010011");
-	addInstruction("lh",    "I210010100");
-	addInstruction("sb",    "I210010101");
-	addInstruction("sh",    "I210010110");
-	addInstruction("sw",    "I210010111");
+	addInstruction("lb",    "I210100000");
+	addInstruction("lw",    "I210100011");
+	addInstruction("lh",    "I210100001");
+	addInstruction("sb",    "I210101000");
+	addInstruction("sh",    "I210101001");
+	addInstruction("sw",    "I210101011");
 	
 	//J - instructions------------------------------------
 	//Branches and jump
-	addInstruction("j",     "J001010000");
-	addInstruction("jal",   "J001010001");
-    
+	addInstruction("j",     "J001000010");
+	addInstruction("jal",   "J001000011");
 
 }
 
@@ -897,7 +893,7 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 {
     int i = 0, j = 0, nRegsAux = 0, nConstAux = 0, nLabAux = 0;
     static char binary[32];
-    char param[10];
+    char param[10], name[10];
     int isRegister = 0, isLabel = 0, isConstant = 0;
 
     //Define the initial binary
@@ -907,6 +903,15 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 
     //Push the opcode
     concatBinary(0, 6, binary, opcode);
+    
+    //Takes the instruction name
+    while(instruction[i] != ' '){
+    	name[i] = instruction[i];
+		i++;	
+	}
+    name[i] = '\0';
+    i = 0;
+    
     //Formats the instruction
     instruction = strchr(instruction, ' ');
     instruction = ++instruction;
@@ -951,9 +956,7 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
             	char copy[10];
             	
             	//Load and Store
-            	if(nRegsAux == 2 && (strcmp(opcode, "010010") == 0 || strcmp(opcode, "010011") == 0
-				 || strcmp(opcode, "010100") == 0 || strcmp(opcode, "010101") == 0 || 
-				 strcmp(opcode, "010110") == 0 || strcmp(opcode, "010111") == 0) )
+            	if(nRegsAux == 2 && (strcmp(name, "lw") == 0 || strcmp(name, "lh") == 0 || strcmp(name, "lb") == 0 || strcmp(name, "sw") == 0 || strcmp(name, "sh") == 0 || strcmp(name, "sb") == 0) )
 				{ 
 					strcpy(copy, param);
 					
@@ -972,12 +975,31 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
                     return "1";
 
                 //Push on correct position
-                if(nRegsAux == 1)
-                    concatBinary(6, 5, binary, param);
-                else if(nRegsAux == 2)
-                    concatBinary(11, 5, binary, param);
-                else if(nRegsAux == 3)
-                    concatBinary(16, 5, binary, param);
+                if(type == 'R'){
+	                if(nRegsAux == 1){
+						if(strcmp(name, "ext") == 0 || strcmp(name, "ins") == 0)
+							concatBinary(11, 5, binary, param);
+						else if(strcmp(name, "div") == 0 || strcmp(name, "divu") == 0 || strcmp(name, "madd") == 0  || strcmp(name, "maddu") == 0 || strcmp(name, "msub") == 0 || strcmp(name, "msubu") == 0  || strcmp(name, "mult") == 0  || strcmp(name, "multu") == 0 || strcmp(name, "mthi") == 0 || strcmp(name, "mtlo") == 0 || strcmp(name, "jr") == 0)
+							concatBinary(6, 5, binary, param);
+						else
+	                		concatBinary(16, 5, binary, param);
+	            	}
+	                else if(nRegsAux == 2){
+	                	if(strcmp(name, "wsbh") == 0 || strcmp(name, "seh") == 0 || strcmp(name, "seb") == 0 || strcmp(name, "div") == 0 || strcmp(name, "divu") == 0 || strcmp(name, "madd") == 0  || strcmp(name, "maddu") == 0 || strcmp(name, "msub") == 0 || strcmp(name, "msubu") == 0 || strcmp(name, "mult") == 0  || strcmp(name, "multu") == 0 || strcmp(name, "sll") == 0 || strcmp(name, "srl") == 0   || strcmp(name, "sra") == 0   || strcmp(name, "rotr") == 0  )
+	                		concatBinary(11, 5, binary, param);
+	                	else
+	                		concatBinary(6, 5, binary, param);
+					}
+	                	
+	                else if(nRegsAux == 3)
+	                 	concatBinary(11, 5, binary, param);
+	        	}
+	        	else if(type == 'I'){
+	        		if(nRegsAux == 1)
+	                	concatBinary(11, 5, binary, param);
+	                else if(nRegsAux == 2)
+	                	concatBinary(6, 5, binary, param);
+				}
                 
                 //To load and store
                 if(isConstant == 1){
@@ -1000,8 +1022,7 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
                     return "2";
                 
 				//Branchs instructions   
-                if(strcmp(opcode, "001100") == 0 || strcmp(opcode, "001101") == 0
-				|| strcmp(opcode, "001110") == 0 || strcmp(opcode, "001111") == 0)
+                if(strcmp(name, "beq") == 0 || strcmp(name, "bgtz") == 0 || strcmp(name, "bne") == 0 || strcmp(name, "bltz") == 0)
 				{ 		
 						int labelAddress = 0, i = 0;
 						for(i; i < 16; i++){
@@ -1030,8 +1051,7 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 			   if(type != 'R'){
 			   		
 			   		//Unsigned instructions
-			   		if(strcmp(opcode, "000010") == 0 || strcmp(opcode, "000101") == 0
-					|| strcmp(opcode, "001001") == 0 || strcmp(opcode, "001011") == 0)
+			   		if(strcmp(name, "") == 0 || strcmp(name, "") == 0 || strcmp(name, "") == 0 || strcmp(name, "") == 0)
 					{ 
 						if(constValue < 0)
 							return "7";
@@ -1054,12 +1074,29 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 	           	
 	           	   if(constValue > getBinaryRange(5, '+') || constValue < getBinaryRange(5, '-'))
 			   	  	 	return "6";
-			   	  	 	
-	           		//Shamt
+
+	           	   //Shamt, ins and ext
 	               char constant[5];
+	               int size;
+	               
+	               if(strcmp(name, "ext") == 0 && nConstAux == 1)
+				   		constValue--;
 	               itoa(constValue, constant, 2);
 	               strcpy(constant, completeBinary(5, constant));
-	               concatBinary(21, 5, binary, constant);
+	               
+	               if(strcmp(name, "ext") == 0 && nConstAux == 1)
+	               		concatBinary(16, 5, binary, constant);
+	               else	if(strcmp(name, "ins") == 0 && nConstAux == 1)
+	               		size = constValue;
+	               else{
+	               		concatBinary(21, 5, binary, constant);
+	               		if(strcmp(name, "ins") == 0 ){
+	               			int msb = (size + constValue) - 1;	               			
+	               			itoa(msb, constant, 2);
+	               			strcpy(constant, completeBinary(5, constant));
+	               			concatBinary(16, 5, binary, constant);
+						}
+				   }
 			   }
             }
             param[0] = '\0';
@@ -1073,8 +1110,19 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
         return "5";
 
     //Place the shamt and function on binary
-    if(type == 'R')
+    if(type == 'R'){
         concatBinary(26, 6, binary, function);
+		
+		//seh, seb and wsbh instructions
+		if(strcmp(opcode, "011111") == 0 && strcmp(function, "100000") == 0){
+			if(strcmp(name, "seh") == 0) 
+				concatBinary(21, 5, binary, "11000");
+			else if(strcmp(name, "seb") == 0) 
+				concatBinary(21, 5, binary, "10000");
+			else if(strcmp(name, "wsbh") == 0) 
+				concatBinary(21, 5, binary, "00010");
+		}
+	}
 
     binary[32] = '\0';
     return binary;

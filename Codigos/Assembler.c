@@ -1051,7 +1051,7 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 			   if(type != 'R'){
 			   		
 			   		//Unsigned instructions
-			   		if(strcmp(name, "") == 0 || strcmp(name, "") == 0 || strcmp(name, "") == 0 || strcmp(name, "") == 0)
+			   		if(strcmp(name, "addiu") == 0 || strcmp(name, "sltiu") == 0)
 					{ 
 						if(constValue < 0)
 							return "7";
@@ -1120,8 +1120,13 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 			else if(strcmp(name, "seb") == 0) 
 				concatBinary(21, 5, binary, "10000");
 			else if(strcmp(name, "wsbh") == 0) 
-				concatBinary(21, 5, binary, "00010");
+				concatBinary(21, 5, binary, "00010");	
 		}
+		
+		if(strcmp(name, "rotr") == 0)
+			concatBinary(6, 5, binary, "00001");
+		else if(strcmp(name, "rotrv") == 0)
+			concatBinary(21, 5, binary, "00001");
 	}
 
     binary[32] = '\0';

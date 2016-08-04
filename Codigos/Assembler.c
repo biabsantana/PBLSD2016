@@ -985,20 +985,35 @@ char* mountBinary(char instruction[],int nRegisters,int nConstants,int nLabels, 
 	                		concatBinary(16, 5, binary, param);
 	            	}
 	                else if(nRegsAux == 2){
-	                	if(strcmp(name, "wsbh") == 0 || strcmp(name, "seh") == 0 || strcmp(name, "seb") == 0 || strcmp(name, "div") == 0 || strcmp(name, "divu") == 0 || strcmp(name, "madd") == 0  || strcmp(name, "maddu") == 0 || strcmp(name, "msub") == 0 || strcmp(name, "msubu") == 0 || strcmp(name, "mult") == 0  || strcmp(name, "multu") == 0 || strcmp(name, "sll") == 0 || strcmp(name, "srl") == 0   || strcmp(name, "sra") == 0   || strcmp(name, "rotr") == 0  )
+	                	if(strcmp(name, "wsbh") == 0 || strcmp(name, "seh") == 0 || strcmp(name, "seb") == 0 || strcmp(name, "div") == 0 || strcmp(name, "divu") == 0 || strcmp(name, "madd") == 0  || strcmp(name, "maddu") == 0 || strcmp(name, "msub") == 0 || strcmp(name, "msubu") == 0 || strcmp(name, "mult") == 0  || strcmp(name, "multu") == 0 || strcmp(name, "sll") == 0 || strcmp(name, "srl") == 0   || strcmp(name, "sra") == 0   || strcmp(name, "rotr") == 0  || strcmp(name, "sllv") == 0 || strcmp(name, "srav") == 0 || strcmp(name, "srlv") == 0 || strcmp(name, "rotrv") == 0)
 	                		concatBinary(11, 5, binary, param);
 	                	else
 	                		concatBinary(6, 5, binary, param);
 					}
 	                	
-	                else if(nRegsAux == 3)
-	                 	concatBinary(11, 5, binary, param);
+	                else if(nRegsAux == 3){
+	                	if(strcmp(name, "sllv") == 0 || strcmp(name, "srav") == 0 || strcmp(name, "srlv") == 0 || strcmp(name, "rotrv") == 0)
+							concatBinary(6, 5, binary, param);
+						else
+							concatBinary(11, 5, binary, param);
+					}
+	                 	
 	        	}
 	        	else if(type == 'I'){
-	        		if(nRegsAux == 1)
-	                	concatBinary(11, 5, binary, param);
-	                else if(nRegsAux == 2)
-	                	concatBinary(6, 5, binary, param);
+	        		if(nRegsAux == 1){
+	        			if(strcmp(name, "beq") == 0 || strcmp(name, "bne") == 0  || strcmp(name, "bgtz") == 0  || strcmp(name, "bltz") == 0)
+	        				concatBinary(6, 5, binary, param);
+	        			else
+	        				concatBinary(11, 5, binary, param);
+	        			
+					}
+	                else if(nRegsAux == 2){
+	                	if(strcmp(name, "beq") == 0 || strcmp(name, "bne") == 0  || strcmp(name, "bgtz") == 0  || strcmp(name, "bltz") == 0)
+	        				concatBinary(11, 5, binary, param);
+	        			else
+	        				concatBinary(6, 5, binary, param);
+					}
+	                	
 				}
                 
                 //To load and store

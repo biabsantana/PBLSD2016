@@ -1,11 +1,11 @@
-.module calculo_potencia
+.module calculo_raiz
 	
 	.pseg
-	li $s0, 16 ;raiz
-	li $s1, 1; ;so para comparacao
-	li $s2, 0 ;contador
-	li $t0, 0 ;resultado parcial
-	li $t1, 0 ;verificador
+	addi $s0, $zero, 16 ;raiz
+	addi $s1, $zero, 1; ;so para comparacao
+	addi $s2, $zero, 0 ;contador
+	addi $t0, $zero, 0 ;resultado parcial
+	addi $t1, $zero, 0 ;verificador
 
 	
 	Loop: slti $t1, $s0, 1 ;verifica se o resultado parcial é menor do que 1

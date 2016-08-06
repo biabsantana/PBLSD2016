@@ -10,6 +10,7 @@ void cleanRegisters();
 void executeProgram();
 void callControlUnit();
 int getBinaryRange(int nBits, char signal);
+void writeFile();
 //------------------ULA OPERATIONS-----------------------------------
 int ula_add(int op1, int op2);
 unsigned int ula_addu(unsigned int op1, unsigned int op2);
@@ -82,14 +83,12 @@ void main()
             showMemory();
             printf("\n*Successfully read program\n");
             executeProgram();
+            showMemory();
             showBankRegisters();
         }
         //Error
         else
-        {
-
-        }
-        showMemory();
+        	printf("\n*Error on read program\n");
         cleanMemory();
         cleanRegisters();
         printf("\n\n*Press any button to read other program");
@@ -577,6 +576,14 @@ void sw(int value, int offset, int baseRegister)
 	int address = GPR[baseRegister];
 	printf(" = %d -> (0x%04x + %d)", value, address, offset);
 	memory[address + offset] = value;
-	next_free_address+=offset;
+	
+	if(baseRegister == 29){
+		next_free_address++;
+		int i;
+		printf("\n\t\t\tSTACK\n");
+		for(i = next_free_address; i >= GPR[28]; i--)
+			printf("\t\t\t0x%04x -> %d\n", i, memory[i]);
+	}
 }
+
 

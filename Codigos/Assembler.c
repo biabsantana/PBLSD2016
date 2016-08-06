@@ -332,8 +332,10 @@ void createInstructions()
     //I - instructions------------------------------------
     //Arithmetic
     addInstruction("addi",  "I210001000");
+    addInstruction("move",  "I200001000");
     addInstruction("addiu", "I210001001");
     addInstruction("lui",   "I110001111");
+    addInstruction("li",    "I110001111");
     //Logic
     addInstruction("andi",  "I210001100");
     addInstruction("ori",   "I210001101");
@@ -358,7 +360,6 @@ void createInstructions()
 	//Branches and jump
 	addInstruction("j",     "J001000010");
 	addInstruction("jal",   "J001000011");
-
 }
 
 //Add in the list a read command

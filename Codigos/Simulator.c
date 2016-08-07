@@ -288,7 +288,8 @@ void callControlUnit()
 					printf("movn\n\t\tOperation: ");
 					break;
 				case 16:
-					printf("mfhi\n\t\tOperation: ");
+					printf("mfhi\n\t\tOperation: HI");
+					GPR[rt] = HI;
 					break;
 				case 17:
 					printf("mthi\n\t\tOperation: ");
@@ -300,7 +301,8 @@ void callControlUnit()
 					printf("mtlo\n\t\tOperation: ");
 					break;
 				case 24:
-					printf("mult\n\t\tOperation: ");
+					printf("mult\n\t\tOperation: $%d = $%d * $%d", rs, rs, rt);
+					GPR[rd] = ula_mult(GPR[rs], GPR[rt]);
 					break;
 				case 25:
 					printf("multu\n\t\tOperation: ");
@@ -320,7 +322,8 @@ void callControlUnit()
 					printf("addu\n\t\tOperation: ");
 					break;
 				case 34:
-					printf("sub\n\t\tOperation: ");
+					printf("sub\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt);
+					GPR[rd] = ula_sub(GPR[rs], GPR[rt]);
 					break;
 				case 35:
 					printf("subu\n\t\tOperation: ");
@@ -338,7 +341,8 @@ void callControlUnit()
 					printf("nor\n\t\tOperation: ");
 					break;
 				case 42:
-					printf("slt\n\t\tOperation: ");
+					printf("slt\n\t\tOperation: $%d > $%d?", rd, rs, rt);
+					GPR[rd] = ula_slt(GPR[rs], GPR[rt]);
 					break;
 				case 43:
 					printf("sltu\n\t\tOperation: ");
@@ -537,6 +541,17 @@ int ula_mult(int op1, int op2)
 	return mult;
 }
 
+int ula_div(int op1, int op2)
+{
+	int div = 0;
+	div = op1/op2;
+	LO = div;
+	int mod = (rs%rt)
+	HI = mod;
+	
+	return div;
+}
+
 //The ULA equal comparation
 int ula_equal(int op1, int op2)
 {
@@ -598,7 +613,7 @@ void bne(int op1, int op2, int offset)
 }
 
 //The slt instruction implementation
-void slt(int op1, int op2)
+void ula_slt(int op1, int op2)
 {
 	printf("%d < %d? ", op1, op2);
 	if(op1 < op2){

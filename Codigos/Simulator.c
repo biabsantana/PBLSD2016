@@ -552,6 +552,23 @@ int ula_equal(int op1, int op2)
 	return comparation;
 }
 
+//The ULA subtration comparation
+int ula_sub(int op1, int op2)
+{
+	int sub = op1 - op2;
+	printf("= %d - %d = %d", op1, op2, sub);
+	//Check flag conditions
+	if(sub == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(sub > getBinaryRange(32, '+') || sub < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return sum;
+}
+
 //The beq instruction implementation
 void beq(int op1, int op2, int offset)
 {

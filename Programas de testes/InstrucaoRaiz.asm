@@ -15,7 +15,8 @@
 	sub $s0, $s0, $t0 ;raiz - indice
 	add $s2, $s2, 1 ;adiciona 1 ao contador
 	j Loop
-	Endfor: sw $s2, resFinal
+	Endfor: sw resFinal, 0($sp)
+	addi $sp, $sp, 1
 	
 	.dseg
 	resFinal: 
@@ -24,6 +25,7 @@
 
 
 ;LÓGICA
+; Fonte: http://www.guj.com.br/t/ajuda-em-assembly/283268
 ;raiz de 16 = ?
 ;1º Passo 16 − 1 = 15
 ;2º Passo 15 − 3 = 12

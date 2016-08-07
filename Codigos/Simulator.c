@@ -40,6 +40,7 @@ int ula_equal(int op1, int op2);
 
 //------------------BRANCHS OPERATIONS-------------------------------
 void beq(int op1, int op2, int offset);
+void bne(int op1, int op2, int offset);
 //------------------BRANCHS OPERATIONS-------------------------------
 
 
@@ -566,7 +567,7 @@ int ula_sub(int op1, int op2)
 		flags[3] = 1;
 		printf(" (Flag overflow activated)");
 	}
-	return sum;
+	return sub;
 }
 
 //The beq instruction implementation
@@ -581,6 +582,32 @@ void beq(int op1, int op2, int offset)
 	else
 		PC++;
 }
+
+
+//The bne instruction implementation
+void bne(int op1, int op2, int offset)
+{
+	printf("%d != %d? ", op1, op2);
+	int comparation = ula_equal(op1, op2);
+	if(comparation == 0){
+		printf(" -> PC = 0x%04x + (%d)",PC,offset);
+		PC = PC + offset;
+	}
+	else
+		PC++;
+}
+
+//The slt instruction implementation
+void slt(int op1, int op2)
+{
+	printf("%d < %d? ", op1, op2);
+	if(op1 < op2){
+		return 1;
+	}
+	else
+		return 0;
+}
+
 
 //The j instruction implementation
 void j(int address)

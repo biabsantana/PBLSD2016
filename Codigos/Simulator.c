@@ -438,6 +438,7 @@ void callControlUnit()
 				break;
 			case 10:
 				printf("slti\n\t\tOperation: ");
+				GPR[rt] = ula_stl(GPR[rs], immediate);
 				break;
 			case 11:
 				printf("sltiu\n\t\tOperation: ");
@@ -540,7 +541,7 @@ int ula_mult(int op1, int op2)
 	}
 	return mult;
 }
-
+//The ULA division comparation
 int ula_div(int op1, int op2)
 {
 	int div = 0;

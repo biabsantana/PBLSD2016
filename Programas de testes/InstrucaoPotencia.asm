@@ -10,6 +10,5 @@
 		mul $t0, $t0, $s0
 		addi $s2, $s2, 1
 		j Loop
-		Endfor: sw $t0, 0($sp)
-		addi $sp, $sp, 1		
+		Endfor: sw $t0, 0($gp)
 .end

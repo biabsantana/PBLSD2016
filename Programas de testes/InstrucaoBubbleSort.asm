@@ -3,34 +3,42 @@
 	.pseg
 
 	
-	inicio: sw $t0, 0($gp)       ; carrega o endereço base do array em $t0
-   	
-	addi $s1, $zero, 5 ;tamanho
-	addi $t9, $zero, 1
-	sub $s2, $s1, $t9 ;i = tamanho
-	addi $s3, $zero, 0 ; j=0
-	addi $t1, $zero, 1 ;apenas para comparacao
-	addi $s0, $zero, 0 ;auxiliar para troca dos vetores
+	Start: lw $s0, 0($gp) ; carrega o endereço base do array
+	addi $t0, $zero, 5 ;tamanho
+	move $s1, $t0 ; $s1 = i
+	addi $s1, $s1, -1 ;tamanho - 1
+	move $s2, $zero ;j=0
+	addi $s4, $zero, 1
 	
-	;Loop externo	
-	FirstLoop: 
-	sub $s3, $s3, 1
-	slti $t0, $s2, 1 ; i<1?
-	beq $t1, $t0, EndFLopp
-		;Loop interno
-		ScndLopp: slt $t0, $s3, $s2 ; j<i?
-		bne $t1, $t0, FirstLoop
-		add $t1, $t0, $s3 ; $t1 recebe a posicao da base do vetor + s3 q eh o j
-		add $s0, $zero, $t1 ; aux recebe o valor do vetor da posicao j
-		add $t1, $t1, 1
-		add $t1, $zero, $t1 ;vetor[j] = vetor[j+1]
-		addi $t1, $t1, 1
-		add $s0, $zero, $t1 ;vetor[j+1] = aux
-		addi $s3, $zero, 1 ;j++
-		j ScndLopp ;repete
-	
-	EndFLopp:
-	
+	FstLoop: 
+			 move $a2, $gp
+			 slti $a0, $s1, 2;i>=1?
+			 bne $a0, $zero, End
+		ScndLoop: 
+				  slt $t1, $s2, $s1 ; j<i?
+				  bne $t1, $s4, DecrementaI
+				  ;if
+				  lw $t2, 0($a2)
+				  lw $t3, 1($a2)
+				  slt $t4, $t3, $t2 ;vetor[i]>vetor[i+j]?
+				  bne $t4, $zero, Swap
+				  j IncrementJ
+
+					
+		Swap: 	;move $s3, $t2 ;aux = vetor[j]
+				sw $t3, 0($a2) ;vetor[j] = vetor[j+1]
+				sw $t2, 1($a2)
+				
+		
+		IncrementJ: addi $s2, $s2, 1 ;j++
+					addi $a2, $a2, 1
+					j ScndLoop
+					
+		DecrementaI: addi $s1, $s1, -1 
+					j FstLoop
+		
+		End: 
+				  
 	.dseg
 	
 		vetor: ;cria um vetor

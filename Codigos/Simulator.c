@@ -46,6 +46,7 @@ void bne(int op1, int op2, int offset);
 
 //------------------LOAD/STORE OPERATIONS----------------------------
 void sw(int value, int offset, int baseRegister);
+void lw(int value, int offset, int baseRegister);
 //------------------LOAD/STORE OPERATIONS----------------------------
 
 
@@ -217,6 +218,7 @@ void executeProgram()
 	while(PC != GPR[28]){
 		//Takes the memory value and puts on IR
 		IR = memory[PC];
+		PC++;
 		//Calls the control unit
 		callControlUnit();
 	}
@@ -226,7 +228,7 @@ void executeProgram()
 //Calls the control unit to start the instruction execution
 void callControlUnit()
 {
-	printf("   PC -> 0x%04x | IR = %d\n\tInstruction: ", PC, IR);
+	printf("   PC -> 0x%04x | IR = %d\n\tInstruction: ", PC-1, IR);
 	//Shift the IR to find the opcode[31...26]
 	unsigned int opcode = IR >> 26;
 	
@@ -316,7 +318,6 @@ void callControlUnit()
 				case 32:
 					printf("add\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt);
 					GPR[rd] = ula_add(GPR[rs], GPR[rt]);
-					PC++;
 					break;	
 				case 33:
 					printf("addu\n\t\tOperation: ");
@@ -341,7 +342,7 @@ void callControlUnit()
 					printf("nor\n\t\tOperation: ");
 					break;
 				case 42:
-					printf("slt\n\t\tOperation: $%d > $%d?", rd, rs, rt);
+					printf("slt\n\t\tOperation: $%d < $%d?", rs, rt);
 					GPR[rd] = ula_slt(GPR[rs], GPR[rt]);
 					break;
 				case 43:
@@ -363,7 +364,6 @@ void callControlUnit()
 				case 2:
 					printf("mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);
 					GPR[rd] = ula_mult(GPR[rs], GPR[rt]);
-					PC++;
 					break;
 				case 4:
 					printf("msub\n\t\tOperation: ");
@@ -419,11 +419,12 @@ void callControlUnit()
 				printf("bltz\n\t\tOperation: ");
 				break;
 			case 4:
-				printf("beq\n\t\tOperation: $%d == $%d -> ", rs, rt);
+				printf("beq\n\t\tOperation: $%d == $%d -> ", rs, rt, immediate);
 				beq(GPR[rs], GPR[rt], immediate);
 				break;
 			case 5:
-				printf("bne\n\t\tOperation: ");
+				printf("bne\n\t\tOperation: $%d != $%d -> ", rs, rt, immediate);
+				bne(GPR[rs], GPR[rt], immediate);
 				break;
 			case 7:
 				printf("bgtz\n\t\tOperation: ");
@@ -431,14 +432,13 @@ void callControlUnit()
 			case 8:
 				printf("addi\n\t\tOperation: $%d = $%d + %d ", rt, rs, immediate);
 				GPR[rt] = ula_add(GPR[rs], immediate);
-				PC++;
 				break;
 			case 9:
 				printf("addiu\n\t\tOperation: ");
 				break;
 			case 10:
 				printf("slti\n\t\tOperation: ");
-				GPR[rt] = ula_stl(GPR[rs], immediate);
+				GPR[rt] = ula_slt(GPR[rs], immediate);
 				break;
 			case 11:
 				printf("sltiu\n\t\tOperation: ");
@@ -462,7 +462,8 @@ void callControlUnit()
 				printf("lh\n\t\tOperation: ");
 				break;
 			case 35:
-				printf("lw\n\t\tOperation: ");
+				printf("lw\n\t\tOperation: $%d <- %d($%d)", rt, immediate, rs);
+				lw(rt, immediate, rs);
 				break;
 			case 40:
 				printf("sb\n\t\tOperation: ");
@@ -473,7 +474,6 @@ void callControlUnit()
 			case 43:
 				printf("sw\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);
 				sw(GPR[rt], immediate, rs);
-				PC++;
 				break;
 		}
 	}
@@ -547,7 +547,7 @@ int ula_div(int op1, int op2)
 	int div = 0;
 	div = op1/op2;
 	LO = div;
-	int mod = (rs%rt)
+	int mod = (op1%op2);
 	HI = mod;
 	
 	return div;
@@ -562,7 +562,6 @@ int ula_equal(int op1, int op2)
 		
 	if(comparation == 0){
 		flags[0] = 1;
-		printf("No (Flag zero activated)");
 	}
 	else
 		printf("Yes");
@@ -592,11 +591,14 @@ void beq(int op1, int op2, int offset)
 	printf("%d == %d? ", op1, op2);
 	int comparation = ula_equal(op1, op2);
 	if(comparation == 1){
+		printf("Yes");
 		printf(" -> PC = 0x%04x + (%d)",PC,offset);
+		PC--;
 		PC = PC + offset;
 	}
 	else
-		PC++;
+		printf("No");
+	
 }
 
 
@@ -606,21 +608,24 @@ void bne(int op1, int op2, int offset)
 	printf("%d != %d? ", op1, op2);
 	int comparation = ula_equal(op1, op2);
 	if(comparation == 0){
+		printf("Yes (Flag zero activated)");
 		printf(" -> PC = 0x%04x + (%d)",PC,offset);
+		PC--;
 		PC = PC + offset;
 	}
 	else
-		PC++;
+		printf("No");
 }
 
 //The slt instruction implementation
-void ula_slt(int op1, int op2)
+int ula_slt(int op1, int op2)
 {
 	printf("%d < %d? ", op1, op2);
 	if(op1 < op2){
+		printf(" Yes.");
 		return 1;
 	}
-	else
+		printf(" No.");
 		return 0;
 }
 
@@ -646,4 +651,16 @@ void sw(int value, int offset, int baseRegister)
 	}
 }
 
+void lw(int value, int offset, int baseRegister)
+{
+	int address = GPR[baseRegister];
+	printf(" = %d <- (0x%04x + %d)", value, address, offset);
+	GPR[value]= memory[address + offset];
+	if(baseRegister == 29){
+		int i;
+		printf("\n\t\t\tSTACK\n");
+		for(i = next_free_address; i >= GPR[28]; i--)
+			printf("\t\t\t0x%04x -> %d\n", i, memory[i]);
+	}
+}
 

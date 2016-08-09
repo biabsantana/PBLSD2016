@@ -690,6 +690,7 @@ int ula_clz(int op){
 	   if(op%10 == 0)
 		zeros++;
 	}
+	printf(" quantidades de 0's em %d =", op, zeros);
 	return zeros;
 }
 
@@ -702,6 +703,7 @@ int ula_clo(int op)){
 			op = op/10;
 		}
 	}
+	printf(" quantidades de 1's em %d =", op, ums);
 	return ums;
 }
 
@@ -737,17 +739,79 @@ unsigned subu (unsigned int op1, unsigned int op2)
 }
 
 int ula_and(int op1, int op2){
-	return (op1 && op2);
+	int ula_and = (op1 && op2);
+	printf(" = %d and %d = %d", op1, op2, ula_and);
+	if(ula_and == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(ula_and > getBinaryRange(32, '+') || ula_and < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return ula_and;
 }
 
 int ula_nor(int op1, int op2){
-	return (!(op1 | op2));
+	int ula_nor = (!(op1 | op2));
+	printf(" = %d nor %d = %d", op1, op2, ula_nor);
+	if(ula_nor == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(ula_nor > getBinaryRange(32, '+') || ula_nor < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return ula_nor;
 }
 
 int ula_or(int op1, int op2){
-	return (op1 | op2);
+	int ula_or = (op1 | op2); 
+	printf(" = %d or %d = %d", op1, op2, ula_or);
+	if(ula_or == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(ula_or > getBinaryRange(32, '+') || ula_or < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return ula_or;
 }
 
 int ula_xor(int op1, int op2){
-	return (op1 ^ op2);
+	int ula_xor = (op1 ^ op2);
+	printf(" = %d xor %d = %d", op1, op2, ula_xor);
+	if(ula_xor == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(ula_xor > getBinaryRange(32, '+') || ula_xor < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return ula_xor;
+}
+
+unsigned int ula_divu(unsigned int op1, unsigned int op2){
+	int div = 0;
+	div = op1/op2;
+	printf(" = %d / %d = %d", op1, op2, div);
+	if(div == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(div > getBinaryRange(32, '+') || div < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	LO = div;
+	int mod = (op1%op2);
+	HI = mod;
+	return div;
+}
+
+unsigned int ula_multu(unsigned int op1, unsigned int op2){
+
 }

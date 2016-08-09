@@ -323,7 +323,8 @@ void callControlUnit()
 					GPR[rd] = ula_add(GPR[rs], GPR[rt]);
 					break;	
 				case 33:
-					printf("addu\n\t\tOperation: ");
+					printf("addu\n\t\tOperation: $%d = $%d + $%d ", rs, rd, rt);
+					GPR[rd] = ula_addu(GPR[rs], GPR[rt]);
 					break;
 				case 34:
 					printf("sub\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt);
@@ -333,16 +334,20 @@ void callControlUnit()
 					printf("subu\n\t\tOperation: ");
 					break;
 				case 36:
-					printf("and\n\t\tOperation: ");
+					printf("and\n\t\tOperation: $%d = $%d and $%d", rd, rs, rt);
+					GPR[rd] = ula_and(GPR[rs], GPR[rt]);
 					break;
 				case 37:
-					printf("or\n\t\tOperation: ");
+					printf("or\n\t\tOperation: $%d = $%d or $%d", rd, rs, rt);
+					GPR[rd] = ula_or(GPR[rs], GPR[rt]);
 					break;
 				case 38:
-					printf("xor\n\t\tOperation: ");
+					printf("xor\n\t\tOperation: $%d = $%d xor $%d", rd, rs, rt);
+					GPR[rd] = ula_xor(GPR[rs], GPR[rt]);
 					break;
 				case 39:
-					printf("nor\n\t\tOperation: ");
+					printf("nor\n\t\tOperation: $%d = $%d nor $%d", rd, rs, rt);
+					GPR[rd] = ula_nor(GPR[rs], GPR[rt]);
 					break;
 				case 42:
 					printf("slt\n\t\tOperation: $%d < $%d?", rs, rt);
@@ -375,10 +380,12 @@ void callControlUnit()
 					printf("msubu\n\t\tOperation: ");
 					break;
 				case 32:
-					printf("clz\n\t\tOperation: ");
+					printf("clz\n\t\tOperation: $%d = quantidade de 0's de $%d", rd, rs);
+					GPR[rd] = ula_clz(GPR[rs]); 
 					break;
 				case 33:
-					printf("clo\n\t\tOperation: ");
+					printf("clo\n\t\tOperation: $%d = quantidade de 1's de $%d", rd, rs);
+					GPR[rd] = ula_clo(GPR[rs]);
 					break;
 			}	
 		}
@@ -447,7 +454,8 @@ void callControlUnit()
 				printf("sltiu\n\t\tOperation: ");
 				break;
 			case 12:
-				printf("andi\n\t\tOperation: ");
+				printf("andi\n\t\tOperation: $%d = $%d and %d", rt, rs, immediate);
+				GPR[rt] = ula_and(GPR[rs], immediate);
 				break;
 			case 13:
 				printf("ori\n\t\tOperation: ");
@@ -673,4 +681,73 @@ void jal(int address){
 
 void jr(int regist){
 	PC = GPR[regist];
+}
+
+
+int ula_clz(int op){
+	int zeros = 0;
+	while(op>0){
+	   if(op%10 == 0)
+		zeros++;
+	}
+	return zeros;
+}
+
+
+int ula_clo(int op)){
+	int ums = 0;
+	while(op>0){
+		if(op%10 == 1){
+			ums++;
+			op = op/10;
+		}
+	}
+	return ums;
+}
+
+
+unsigned int ula_addu(unsigned int op1, unsigned int op2){
+	int sum = op1 + op2;
+	printf("= %d + %d = %d", op1, op2, sum);
+	//Check flag conditions
+	if(sum == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(sum > getBinaryRange(32, '+') || sum < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return sum;
+}
+
+unsigned subu (unsigned int op1, unsigned int op2)
+	int sub = op1 - op2;
+	printf("= %d - %d = %d", op1, op2, sub);
+	//Check flag conditions
+	if(sub == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(sub > getBinaryRange(32, '+') || sub < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return sub;
+}
+
+int ula_and(int op1, int op2){
+	return (op1 && op2);
+}
+
+int ula_nor(int op1, int op2){
+	return (!(op1 | op2));
+}
+
+int ula_or(int op1, int op2){
+	return (op1 | op2);
+}
+
+int ula_xor(int op1, int op2){
+	return (op1 ^ op2);
 }

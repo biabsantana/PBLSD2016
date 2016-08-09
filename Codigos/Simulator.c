@@ -166,7 +166,7 @@ void showMemory()
     int i = 0;
     float memoryUsage = (GPR[29]*4);
     printf("\nUSED MEMORY:\t%.4fKB\n---------------------------------------------------------------------------\n\tAddress\t\tValue\n", memoryUsage/1024);
-    for(i; i <= next_free_address; i++){
+    for(i; i <= next_free_address - 1; i++){
     	if(GPR[28] == i)
     		printf("$gp ->");
 		if(PC == i && GPR[28] != PC)
@@ -642,7 +642,7 @@ void j(int address)
 void sw(int value, int offset, int baseRegister)
 {
 	int address = GPR[baseRegister];
-	printf(" = %d -> (0x%04x + %d)", value, address, offset);
+	printf(" = %d -> (0x%04x + %d) ", value, address, offset);
 	memory[address + offset] = value;
 	
 	if(baseRegister == 29){
@@ -656,7 +656,7 @@ void sw(int value, int offset, int baseRegister)
 void lw(int regist, int offset, int baseRegister)
 {
 	int address = GPR[baseRegister];
-	printf(" = %d <- (0x%04x + %d)", regist, address, offset);
+	printf(" = %d <- (0x%04x + %d) ", regist, address, offset);
 	GPR[regist]= memory[address + offset];
 	if(baseRegister == 29){
 		int i;

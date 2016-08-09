@@ -46,12 +46,14 @@ void bne(int op1, int op2, int offset);
 
 //------------------LOAD/STORE OPERATIONS----------------------------
 void sw(int value, int offset, int baseRegister);
-void lw(int value, int offset, int baseRegister);
+void lw(int regist, int offset, int baseRegister);
 //------------------LOAD/STORE OPERATIONS----------------------------
 
 
 //------------------JUMP OPERATIONS-------------------------------
 void j(int address);
+void jal(int address);
+void jr(int regist);
 //------------------JUMP OPERATIONS-------------------------------
 
 
@@ -152,8 +154,8 @@ int callLoader()
     }
     
     //Defines the $sp and $fp address
-    GPR[29] = next_free_address;
-    GPR[30] = GPR[29];    
+    GPR[30] = 16384;
+    GPR[29] = GPR[30] + 1;    
 	fclose(file);
     return 1;
 }
@@ -171,7 +173,7 @@ void showMemory()
     		printf("PC ->");
     	if(GPR[30] == i && GPR[28] != GPR[30])
     		printf("$fp ->");
-    	if(GPR[29] == i && GPR[30] != GPR[29])
+    	if(GPR[29] == i && GPR[30] != GPR[29] && GPR[29] > GPR[30])
     		printf("$sp ->");
     	printf("\t0x%04x\t\t%d\n", i, memory[i]);
 	}
@@ -278,7 +280,8 @@ void callControlUnit()
 					printf("srav\n\t\tOperation: ");
 					break;
 				case 8:
-					printf("jr\n\t\tOperation: ");
+					printf("jr\n\t\tOperation: PC = 0x%04x", GPR[31]);
+					jr(rs);
 					break;
 				case 9:
 					printf("jalr\n\t\tOperation: ");
@@ -489,7 +492,8 @@ void callControlUnit()
 				j(address);
 				break;
 			case 3:
-				printf("jal\n\t\tOperation: ");
+				printf("jal\n\t\tOperation: $ra = 0x%04x and PC = 0x%04x ", PC, address);
+				jal(address);
 				break;
 		}
 	}
@@ -563,8 +567,6 @@ int ula_equal(int op1, int op2)
 	if(comparation == 0){
 		flags[0] = 1;
 	}
-	else
-		printf("Yes");
 	return comparation;
 }
 
@@ -625,8 +627,9 @@ int ula_slt(int op1, int op2)
 		printf(" Yes.");
 		return 1;
 	}
+	else
 		printf(" No.");
-		return 0;
+	return 0;
 }
 
 
@@ -643,24 +646,31 @@ void sw(int value, int offset, int baseRegister)
 	memory[address + offset] = value;
 	
 	if(baseRegister == 29){
-		next_free_address++;
 		int i;
 		printf("\n\t\t\tSTACK\n");
-		for(i = next_free_address; i >= GPR[28]; i--)
+		for(i = GPR[30]; i >= GPR[29]; i--)
 			printf("\t\t\t0x%04x -> %d\n", i, memory[i]);
 	}
 }
 
-void lw(int value, int offset, int baseRegister)
+void lw(int regist, int offset, int baseRegister)
 {
 	int address = GPR[baseRegister];
-	printf(" = %d <- (0x%04x + %d)", value, address, offset);
-	GPR[value]= memory[address + offset];
+	printf(" = %d <- (0x%04x + %d)", regist, address, offset);
+	GPR[regist]= memory[address + offset];
 	if(baseRegister == 29){
 		int i;
 		printf("\n\t\t\tSTACK\n");
-		for(i = next_free_address; i >= GPR[28]; i--)
+		for(i = GPR[30]; i >= GPR[29]; i--)
 			printf("\t\t\t0x%04x -> %d\n", i, memory[i]);
 	}
 }
 
+void jal(int address){
+	GPR[31] = PC;
+	PC = address;
+}
+
+void jr(int regist){
+	PC = GPR[regist];
+}

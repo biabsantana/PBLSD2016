@@ -252,11 +252,13 @@ void callControlUnit()
 			//Calls the specific instruction with your parameters
 			switch(function){
 				case 0:
-					printf("sll\n\t\tOperation: ");
+					printf("sll\n\t\tOperation: $%d = $%d << $%d", rs, rs, immediate);
+					GPR[rd] = ula_sllv(GPR[rs], immediate);
 					break;
 				case 2:
 					if(rs == 0){
-						printf("srl\n\t\tOperation: ");
+						printf("srl\n\t\tOperation: $%d = $%d >> $%d", rs, rs, immediate);
+						GPR[rd] = ula_srlv(GPR[rs], immediate);
 					}
 					else if(rs == 1){
 						printf("rotr\n\t\tOperation: ");
@@ -266,11 +268,13 @@ void callControlUnit()
 					printf("sra\n\t\tOperation: ");
 					break;
 				case 4:
-					printf("sllv\n\t\tOperation: ");
+					printf("sllv\n\t\tOperation: $%d = $%d << $%d", rd, rs, rt);
+					GPR[rd] = ula_sllv(GPR[rs], GPR[rt]);
 					break;
 				case 6:
 					if(shamt == 0){
-						printf("srlv\n\t\tOperation: ");
+						printf("srlv\n\t\tOperation:  $%d = $%d >> $%d");
+						GPR[rd] = ula_srlv(GPR[rs], immediate);
 					}
 					else if(shamt == 1){
 						printf("rotrv\n\t\tOperation: ");
@@ -293,14 +297,15 @@ void callControlUnit()
 					printf("movn\n\t\tOperation: ");
 					break;
 				case 16:
-					printf("mfhi\n\t\tOperation: HI");
+					printf("mfhi\n\t\tOperation: $%d = HI", rt);
 					GPR[rt] = HI;
 					break;
 				case 17:
 					printf("mthi\n\t\tOperation: ");
 					break;
 				case 18:
-					printf("mflo\n\t\tOperation: ");
+					printf("mflo\n\t\tOperation: $%d = LO", rt);
+					GPR[rt] = LO;
 					break;
 				case 19:
 					printf("mtlo\n\t\tOperation: ");
@@ -447,11 +452,12 @@ void callControlUnit()
 				printf("addiu\n\t\tOperation: ");
 				break;
 			case 10:
-				printf("slti\n\t\tOperation: ");
+				printf("slti\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);
 				GPR[rt] = ula_slt(GPR[rs], immediate);
 				break;
 			case 11:
-				printf("sltiu\n\t\tOperation: ");
+				printf("sltiu\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);
+				GPR[rt] = ula_sltu(GPR[rs], immediate);
 				break;
 			case 12:
 				printf("andi\n\t\tOperation: $%d = $%d and %d", rt, rs, immediate);
@@ -640,6 +646,19 @@ int ula_slt(int op1, int op2)
 	return 0;
 }
 
+//The sltu instruction implementation
+unsigned int ula_sltu(unsigned int op1, unsigned int op2)
+{
+	printf("%d < %d? ", op1, op2);
+	if(op1 < op2){
+		printf(" Yes.");
+		return 1;
+	}
+	else
+		printf(" No.");
+	return 0;
+}
+
 
 //The j instruction implementation
 void j(int address)
@@ -661,7 +680,7 @@ void sw(int value, int offset, int baseRegister)
 	}
 }
 
-void lw(int regist, int offset, int baseRegister)
+void lw(int regist, int offset, int baseRegister) ----------------------------------------------------------------------------------------
 {
 	int address = GPR[baseRegister];
 	printf(" = %d <- (0x%04x + %d) ", regist, address, offset);
@@ -813,5 +832,28 @@ unsigned int ula_divu(unsigned int op1, unsigned int op2){
 }
 
 unsigned int ula_multu(unsigned int op1, unsigned int op2){
+	int mult = op1 * op2;
+	printf(" = %d * %d = %d", op1, op2, mult);
+	//Check flag conditions
+	if(mult == 0){
+		flags[0] = 1;
+		printf(" (Flag zero activated)");
+	}
+	else if(mult > getBinaryRange(32, '+') || mult < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		printf(" (Flag overflow activated)");
+	}
+	return mult;
+}
 
+int ula_sllv(int op1, int op2){
+	int sllv = (op1 << op2);
+	printf("= %d << %d = %d", op1, op2, sllv);
+	return sllv;
+}
+
+int ula_srlv(int op1, int op2){
+	int srlv = (op1 >> op2);
+	printf("= %d >> %d = %d", op1, op2, srlv);
+	return srlv;
 }

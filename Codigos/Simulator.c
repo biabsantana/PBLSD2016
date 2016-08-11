@@ -224,7 +224,7 @@ void executeProgram()
 		//Calls the control unit
 		callControlUnit();
 	}
-	printf("-----------------------------------------------------------------------------\n");
+	printf("------------------------------------------------------------------\n");
 }
 
 //Calls the control unit to start the instruction execution
@@ -252,13 +252,13 @@ void callControlUnit()
 			//Calls the specific instruction with your parameters
 			switch(function){
 				case 0:
-					printf("sll\n\t\tOperation: $%d = $%d << $%d", rs, rs, immediate);
-					GPR[rd] = ula_sllv(GPR[rs], immediate);
+					printf("sll\n\t\tOperation: $%d = $%d << %d", rd, rt, shamt); //-------------------------------------TESTED
+					GPR[rd] = ula_sllv(GPR[rt], shamt);
 					break;
 				case 2:
 					if(rs == 0){
-						printf("srl\n\t\tOperation: $%d = $%d >> $%d", rs, rs, immediate);
-						GPR[rd] = ula_srlv(GPR[rs], immediate);
+						printf("srl\n\t\tOperation: $%d = $%d >> %d", rd, rt, shamt); //-------------------------------------TESTED
+						GPR[rd] = ula_srlv(GPR[rt], shamt);
 					}
 					else if(rs == 1){
 						printf("rotr\n\t\tOperation: ");
@@ -268,13 +268,13 @@ void callControlUnit()
 					printf("sra\n\t\tOperation: ");
 					break;
 				case 4:
-					printf("sllv\n\t\tOperation: $%d = $%d << $%d", rd, rs, rt);
-					GPR[rd] = ula_sllv(GPR[rs], GPR[rt]);
+					printf("sllv\n\t\tOperation: $%d = $%d << $%d", rd, rt, rs); //-------------------------------------TESTED
+					GPR[rd] = ula_sllv(GPR[rt], GPR[rs]);
 					break;
 				case 6:
 					if(shamt == 0){
-						printf("srlv\n\t\tOperation:  $%d = $%d >> $%d");
-						GPR[rd] = ula_srlv(GPR[rs], immediate);
+						printf("srlv\n\t\tOperation:  $%d = $%d >> $%d", rd, rt, rs); //-------------------------------------TESTED
+						GPR[rd] = ula_srlv(GPR[rt], GPR[rs]);
 					}
 					else if(shamt == 1){
 						printf("rotrv\n\t\tOperation: ");
@@ -324,7 +324,7 @@ void callControlUnit()
 					printf("divu\n\t\tOperation: ");
 					break;
 				case 32:
-					printf("add\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt);
+					printf("add\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_add(GPR[rs], GPR[rt]);
 					break;	
 				case 33:
@@ -375,7 +375,7 @@ void callControlUnit()
 					printf("maddu\n\t\tOperation: ");
 					break;
 				case 2:
-					printf("mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);
+					printf("mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);//-------------------------------------TESTED
 					GPR[rd] = ula_mult(GPR[rs], GPR[rt]);
 					break;
 				case 4:
@@ -434,25 +434,25 @@ void callControlUnit()
 				printf("bltz\n\t\tOperation: ");
 				break;
 			case 4:
-				printf("beq\n\t\tOperation: $%d == $%d -> ", rs, rt, immediate);
+				printf("beq\n\t\tOperation: $%d == $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
 				beq(GPR[rs], GPR[rt], immediate);
 				break;
 			case 5:
-				printf("bne\n\t\tOperation: $%d != $%d -> ", rs, rt, immediate);
+				printf("bne\n\t\tOperation: $%d != $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
 				bne(GPR[rs], GPR[rt], immediate);
 				break;
 			case 7:
 				printf("bgtz\n\t\tOperation: ");
 				break;
 			case 8:
-				printf("addi\n\t\tOperation: $%d = $%d + %d ", rt, rs, immediate);
+				printf("addi\n\t\tOperation: $%d = $%d + %d ", rt, rs, immediate); //-------------------------------------TESTED
 				GPR[rt] = ula_add(GPR[rs], immediate);
 				break;
 			case 9:
 				printf("addiu\n\t\tOperation: ");
 				break;
 			case 10:
-				printf("slti\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);
+				printf("slti\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);//-------------------------------------TESTED
 				GPR[rt] = ula_slt(GPR[rs], immediate);
 				break;
 			case 11:
@@ -479,7 +479,7 @@ void callControlUnit()
 				printf("lh\n\t\tOperation: ");
 				break;
 			case 35:
-				printf("lw\n\t\tOperation: $%d <- %d($%d)", rt, immediate, rs);
+				printf("lw\n\t\tOperation: $%d <- %d($%d)", rt, immediate, rs); //-------------------------------------TESTED
 				lw(rt, immediate, rs);
 				break;
 			case 40:
@@ -489,7 +489,7 @@ void callControlUnit()
 				printf("sh\n\t\tOperation: ");
 				break;
 			case 43:
-				printf("sw\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);
+				printf("sw\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);//-------------------------------------TESTED
 				sw(GPR[rt], immediate, rs);
 				break;
 		}
@@ -502,11 +502,11 @@ void callControlUnit()
 		//Calls the specific instruction with your parameters
 		switch(opcode){
 			case 2:
-				printf("j\n\t\tOperation: PC = 0x%04x", address);
+				printf("j\n\t\tOperation: PC = 0x%04x", address);//-------------------------------------TESTED
 				j(address);
 				break;
 			case 3:
-				printf("jal\n\t\tOperation: $ra = 0x%04x and PC = 0x%04x ", PC, address);
+				printf("jal\n\t\tOperation: $ra = 0x%04x and PC = 0x%04x ", PC, address);//-------------------------------------TESTED
 				jal(address);
 				break;
 		}
@@ -680,7 +680,7 @@ void sw(int value, int offset, int baseRegister)
 	}
 }
 
-void lw(int regist, int offset, int baseRegister) ----------------------------------------------------------------------------------------
+void lw(int regist, int offset, int baseRegister)
 {
 	int address = GPR[baseRegister];
 	printf(" = %d <- (0x%04x + %d) ", regist, address, offset);
@@ -714,7 +714,7 @@ int ula_clz(int op){
 }
 
 
-int ula_clo(int op)){
+int ula_clo(int op){
 	int ums = 0;
 	while(op>0){
 		if(op%10 == 1){
@@ -743,6 +743,8 @@ unsigned int ula_addu(unsigned int op1, unsigned int op2){
 }
 
 unsigned subu (unsigned int op1, unsigned int op2)
+{
+
 	int sub = op1 - op2;
 	printf("= %d - %d = %d", op1, op2, sub);
 	//Check flag conditions
@@ -848,12 +850,12 @@ unsigned int ula_multu(unsigned int op1, unsigned int op2){
 
 int ula_sllv(int op1, int op2){
 	int sllv = (op1 << op2);
-	printf("= %d << %d = %d", op1, op2, sllv);
+	printf(" = %d << %d = %d", op1, op2, sllv);
 	return sllv;
 }
 
 int ula_srlv(int op1, int op2){
 	int srlv = (op1 >> op2);
-	printf("= %d >> %d = %d", op1, op2, srlv);
+	printf(" = %d >> %d = %d", op1, op2, srlv);
 	return srlv;
 }

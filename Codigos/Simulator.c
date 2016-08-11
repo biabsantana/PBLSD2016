@@ -14,8 +14,7 @@ void writeFile();
 //------------------ULA OPERATIONS-----------------------------------
 int ula_add(int op1, int op2);
 unsigned int ula_addu(unsigned int op1, unsigned int op2);
-int ula_clz(int op);
-int ula_clo(int op);
+int ula_clzclo(int op, int op2);
 int ula_sub (int op1, int op2);
 unsigned subu (unsigned int op1, unsigned int op2);
 int ula_seh(int op);
@@ -26,7 +25,7 @@ int ula_or(int op1, int op2);
 int ula_xor(int op1, int op2);
 int ula_div(int op1, int op2);
 unsigned int ula_divu(unsigned int op1, unsigned int op2);
-int ula_mult(int op1, int op2);
+void ula_mult(int op1, int op2);
 unsigned int ula_multu(unsigned int op1, unsigned int op2);
 int ula_sllv(int op1, int op2);
 int ula_srlv(int op1, int op2);
@@ -35,8 +34,14 @@ int ula_rotrv(int op1, int op2);
 int ula_slt(int op1, int op2);
 unsigned int ula_sltu(unsigned int op1, unsigned int op2);
 int ula_equal(int op1, int op2);
+
 //------------------ULA OPERATIONS-----------------------------------
 
+
+//------------------ACCUMULATOR-----------------------------------
+int movefromHILO(int op);
+void movetoHILO(int value, int op);
+//------------------ACCUMULATOR-----------------------------------
 
 //------------------BRANCHS OPERATIONS-------------------------------
 void beq(int op1, int op2, int offset);
@@ -75,7 +80,6 @@ int flags[5];
 
 void main()
 {
-
     int success;
     while(1){
         printf("TEC499 - SIMULATOR\n\n");
@@ -166,7 +170,7 @@ void showMemory()
     int i = 0;
     float memoryUsage = (GPR[29]*4);
     printf("\nUSED MEMORY:\t%.4fKB\n---------------------------------------------------------------------------\n\tAddress\t\tValue\n", memoryUsage/1024);
-    for(i; i <= next_free_address - 1; i++){
+    for(i; i <= next_free_address; i++){
     	if(GPR[28] == i)
     		printf("$gp ->");
 		if(PC == i && GPR[28] != PC)
@@ -284,35 +288,45 @@ void callControlUnit()
 					printf("srav\n\t\tOperation: ");
 					break;
 				case 8:
-					printf("jr\n\t\tOperation: PC = 0x%04x", GPR[31]);
+					printf("jr\n\t\tOperation: PC = 0x%04x", GPR[31]); //-------------------------------------TESTED
 					jr(rs);
 					break;
 				case 9:
 					printf("jalr\n\t\tOperation: ");
 					break;
 				case 10:
-					printf("movz\n\t\tOperation: ");
+					printf("movz\n\t\tOperation: Se $%d = 0 -> $%d = $%d = %d", rt, rd, rs, GPR[rs]); //-------------------------------------TESTED
+					int aux = ula_equal(rt, 0);
+					if (aux == 1){
+						GPR[rd] = GPR[rs];
+					}
 					break;
 				case 11:
-					printf("movn\n\t\tOperation: ");
+					printf("movn\n\t\tOperation: Se $%d != 0 -> $%d = $%d = %d", rt, rd, rs, GPR[rs]); //-------------------------------------TESTED
+					int aux = ula_equal(rt, 0);
+					if (aux == 0){
+						GPR[rd] = GPR[rs];
+					}
 					break;
 				case 16:
-					printf("mfhi\n\t\tOperation: $%d = HI", rt);
-					GPR[rt] = HI;
+					printf("mfhi\n\t\tOperation: $%d = HI", rd); //-------------------------------------TESTED
+					GPR[rd] = movefromHILO(1);
 					break;
 				case 17:
-					printf("mthi\n\t\tOperation: ");
+					printf("mthi\n\t\tOperation: HI = $%d", rs); //-------------------------------------TESTED
+					movetoHILO(GPR[rs], 1);
 					break;
 				case 18:
-					printf("mflo\n\t\tOperation: $%d = LO", rt);
-					GPR[rt] = LO;
+					printf("mflo\n\t\tOperation: $%d = LO", rd); //-------------------------------------TESTED
+					GPR[rd] = movefromHILO(0);
 					break;
 				case 19:
-					printf("mtlo\n\t\tOperation: ");
+					printf("mtlo\n\t\tOperation: LO = $%d", rs); //-------------------------------------TESTED
+					movetoHILO(GPR[rs], 0);
 					break;
 				case 24:
-					printf("mult\n\t\tOperation: $%d = $%d * $%d", rs, rs, rt);
-					GPR[rd] = ula_mult(GPR[rs], GPR[rt]);
+					printf("mult\n\t\tOperation: HI e LO = $%d * $%d", rs, rt);
+					ula_mult(GPR[rs], GPR[rt]);
 					break;
 				case 25:
 					printf("multu\n\t\tOperation: ");
@@ -328,34 +342,34 @@ void callControlUnit()
 					GPR[rd] = ula_add(GPR[rs], GPR[rt]);
 					break;	
 				case 33:
-					printf("addu\n\t\tOperation: $%d = $%d + $%d ", rs, rd, rt);
+					printf("addu\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_addu(GPR[rs], GPR[rt]);
 					break;
 				case 34:
-					printf("sub\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt);
+					printf("sub\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_sub(GPR[rs], GPR[rt]);
 					break;
 				case 35:
 					printf("subu\n\t\tOperation: ");
 					break;
 				case 36:
-					printf("and\n\t\tOperation: $%d = $%d and $%d", rd, rs, rt);
+					printf("and\n\t\tOperation: $%d = $%d and $%d", rd, rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_and(GPR[rs], GPR[rt]);
 					break;
 				case 37:
-					printf("or\n\t\tOperation: $%d = $%d or $%d", rd, rs, rt);
+					printf("or\n\t\tOperation: $%d = $%d or $%d", rd, rs, rt);  //-------------------------------------TESTED
 					GPR[rd] = ula_or(GPR[rs], GPR[rt]);
 					break;
 				case 38:
-					printf("xor\n\t\tOperation: $%d = $%d xor $%d", rd, rs, rt);
+					printf("xor\n\t\tOperation: $%d = $%d xor $%d", rd, rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_xor(GPR[rs], GPR[rt]);
 					break;
 				case 39:
-					printf("nor\n\t\tOperation: $%d = $%d nor $%d", rd, rs, rt);
+					printf("nor\n\t\tOperation: $%d = $%d nor $%d", rd, rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_nor(GPR[rs], GPR[rt]);
 					break;
 				case 42:
-					printf("slt\n\t\tOperation: $%d < $%d?", rs, rt);
+					printf("slt\n\t\tOperation: $%d < $%d?", rs, rt); //-------------------------------------TESTED
 					GPR[rd] = ula_slt(GPR[rs], GPR[rt]);
 					break;
 				case 43:
@@ -376,7 +390,7 @@ void callControlUnit()
 					break;
 				case 2:
 					printf("mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);//-------------------------------------TESTED
-					GPR[rd] = ula_mult(GPR[rs], GPR[rt]);
+					GPR[rd] = ula_mul(GPR[rs], GPR[rt]);
 					break;
 				case 4:
 					printf("msub\n\t\tOperation: ");
@@ -385,12 +399,12 @@ void callControlUnit()
 					printf("msubu\n\t\tOperation: ");
 					break;
 				case 32:
-					printf("clz\n\t\tOperation: $%d = quantidade de 0's de $%d", rd, rs);
-					GPR[rd] = ula_clz(GPR[rs]); 
+					printf("clz\n\t\tOperation: $%d = quantidade de 0's de $%d", rd, rs); //-------------------------------------TESTED
+					GPR[rd] = ula_clzclo(GPR[rs], 0); 
 					break;
 				case 33:
-					printf("clo\n\t\tOperation: $%d = quantidade de 1's de $%d", rd, rs);
-					GPR[rd] = ula_clo(GPR[rs]);
+					printf("clo\n\t\tOperation: $%d = quantidade de 1's de $%d", rd, rs); //-------------------------------------TESTED
+					GPR[rd] = ula_clzclo(GPR[rs], 1);
 					break;
 			}	
 		}
@@ -456,11 +470,11 @@ void callControlUnit()
 				GPR[rt] = ula_slt(GPR[rs], immediate);
 				break;
 			case 11:
-				printf("sltiu\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);
+				printf("sltiu\n\t\tOperation: $%d = $%d < $%d ", rt, rs, immediate); //-------------------------------------TESTED
 				GPR[rt] = ula_sltu(GPR[rs], immediate);
 				break;
 			case 12:
-				printf("andi\n\t\tOperation: $%d = $%d and %d", rt, rs, immediate);
+				printf("andi\n\t\tOperation: $%d = $%d and %d", rt, rs, immediate); //-------------------------------------TESTED
 				GPR[rt] = ula_and(GPR[rs], immediate);
 				break;
 			case 13:
@@ -544,7 +558,7 @@ int ula_add(int op1, int op2)
 }
 
 //The multiplication logic in ULA
-int ula_mult(int op1, int op2)
+int ula_mul(int op1, int op2)
 {
 	int mult = op1 * op2;
 	printf(" = %d * %d = %d", op1, op2, mult);
@@ -703,32 +717,28 @@ void jr(int regist){
 }
 
 
-int ula_clz(int op){
-	int zeros = 0;
-	while(op>0){
-	   if(op%10 == 0)
-		zeros++;
+int ula_clzclo(int op, int op2){
+	int zeros = 0, i, ones = 0;
+	int aux = 0;
+	for(i = 0; i < 32; i++){
+		aux = op & 1;
+		op = op >> 1;
+		if(aux == 0)
+			zeros++;
+		else
+			ones++;
 	}
-	printf(" quantidades de 0's em %d =", op, zeros);
-	return zeros;
-}
-
-
-int ula_clo(int op){
-	int ums = 0;
-	while(op>0){
-		if(op%10 == 1){
-			ums++;
-			op = op/10;
-		}
+	if(op2==0){
+		printf(" = %d", zeros);
+		return zeros;
 	}
-	printf(" quantidades de 1's em %d =", op, ums);
-	return ums;
+		printf(" = %d", ones);
+		return ones;
 }
 
 
 unsigned int ula_addu(unsigned int op1, unsigned int op2){
-	int sum = op1 + op2;
+	unsigned sum = op1 + op2;
 	printf("= %d + %d = %d", op1, op2, sum);
 	//Check flag conditions
 	if(sum == 0){
@@ -760,13 +770,9 @@ unsigned subu (unsigned int op1, unsigned int op2)
 }
 
 int ula_and(int op1, int op2){
-	int ula_and = (op1 && op2);
+	int ula_and = (op1 & op2);
 	printf(" = %d and %d = %d", op1, op2, ula_and);
-	if(ula_and == 0){
-		flags[0] = 1;
-		printf(" (Flag zero activated)");
-	}
-	else if(ula_and > getBinaryRange(32, '+') || ula_and < getBinaryRange(32, '-')){
+	if(ula_and > getBinaryRange(32, '+') || ula_and < getBinaryRange(32, '-')){
 		flags[3] = 1;
 		printf(" (Flag overflow activated)");
 	}
@@ -774,7 +780,7 @@ int ula_and(int op1, int op2){
 }
 
 int ula_nor(int op1, int op2){
-	int ula_nor = (!(op1 | op2));
+	int ula_nor = (~(op1 | op2));
 	printf(" = %d nor %d = %d", op1, op2, ula_nor);
 	if(ula_nor == 0){
 		flags[0] = 1;
@@ -859,3 +865,38 @@ int ula_srlv(int op1, int op2){
 	printf(" = %d >> %d = %d", op1, op2, srlv);
 	return srlv;
 }
+
+int movefromHILO(int op){
+	if(op==1){
+		printf(" = HI = %d", HI);
+		return HI;
+	}else{
+		printf(" = LO = %d", LO);
+		return LO;
+	}
+}
+
+void movetoHILO(int value, int op){
+		if(op==1){
+		printf(" = HI = rs = %d", value);
+		HI = value;
+	}else{
+		printf(" = LO = rs = %d", value);
+		LO = value;
+	}
+}
+
+void ula_mult(int op1, int op2){
+	long int produt = op1 * op2;
+	if(produt < getBinaryRange(32, '+')){
+		printf(" = HI = 0, LO = %d", produt);
+		LO = produt;
+		HI = 0;
+	}else{	
+		//HI = produt >> 32;
+	//	int shift = produt << 32;
+	//	LO = shift >> 32;		
+		printf(" = HI = %d e LO = %d", HI, LO);
+	}
+}
+

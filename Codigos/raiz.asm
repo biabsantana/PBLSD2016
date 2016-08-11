@@ -13,8 +13,7 @@
 	sub $s0, $s0, $t0 ;raiz - indice
 	addi $s2, $s2, 1 ;adiciona 1 ao contador
 	j Loop
-	Endfor: addi $sp, $sp, 1
-	sw $s2, 0($sp)
+	Endfor: sw $s2, 0($gp) ;armazena o resultado final
 
 .end
 

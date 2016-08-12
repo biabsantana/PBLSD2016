@@ -34,7 +34,6 @@ int ula_rotrv(int op1, int op2);
 int ula_slt(int op1, int op2);
 unsigned int ula_sltu(unsigned int op1, unsigned int op2);
 int ula_equal(int op1, int op2);
-
 //------------------ULA OPERATIONS-----------------------------------
 
 
@@ -59,6 +58,7 @@ void lw(int regist, int offset, int baseRegister);
 void j(int address);
 void jal(int address);
 void jr(int regist);
+void jalr(int rd, int rs);
 //------------------JUMP OPERATIONS-------------------------------
 
 
@@ -78,6 +78,9 @@ int LO = 0;
 //Flags: 0 - zero(z), 1 - signal(s), 2 - carry(c), 3 - overflow(o), 4 - parity(p), 
 int flags[5];
 
+FILE *file;
+int wordsQuantity = 0;
+
 void main()
 {
     int success;
@@ -88,9 +91,10 @@ void main()
 
         //Ok
         if(success == 1){
-            showMemory();
-            printf("\n*Successfully read program\n");
+            printf("\n*Program read and executed\n");
+            file = fopen("log.txt", "w");
             executeProgram();
+            fclose(file);
             showMemory();
             showBankRegisters();
         }
@@ -152,14 +156,16 @@ int callLoader()
 		else{
 			//Put the instruction on memory and increments the next memory address
         	memory[next_free_address] = instruction;
-        	next_free_address++;	
+        	next_free_address++;
+			wordsQuantity++;	
 		}
         printf("\n");
     }
     
     //Defines the $sp and $fp address
-    GPR[30] = 16384;
-    GPR[29] = GPR[30] + 1;    
+    GPR[30] = 16383;
+    GPR[29] = GPR[30] + 1;
+    next_free_address--;
 	fclose(file);
     return 1;
 }
@@ -168,7 +174,7 @@ int callLoader()
 void showMemory()
 {
     int i = 0;
-    float memoryUsage = (GPR[29]*4);
+    float memoryUsage = (wordsQuantity*4);
     printf("\nUSED MEMORY:\t%.4fKB\n---------------------------------------------------------------------------\n\tAddress\t\tValue\n", memoryUsage/1024);
     for(i; i <= next_free_address; i++){
     	if(GPR[28] == i)
@@ -219,7 +225,7 @@ void cleanRegisters()
 //Execute the program loaded on memory
 void executeProgram()
 {
-	printf("\n-----------------------------EXECUTING PROGRAM-----------------------------\n");
+	fputs("----------------------------------PROGRAM LOG----------------------------------\n\n", file);
 	//Executes the program while PC address is a instruction address on memory
 	while(PC != GPR[28]){
 		//Takes the memory value and puts on IR
@@ -228,13 +234,16 @@ void executeProgram()
 		//Calls the control unit
 		callControlUnit();
 	}
-	printf("------------------------------------------------------------------\n");
+	fputs("--------------------------------------------------------------------------------\n", file);
 }
 
 //Calls the control unit to start the instruction execution
 void callControlUnit()
 {
-	printf("   PC -> 0x%04x | IR = %d\n\tInstruction: ", PC-1, IR);
+	char str[100];
+	sprintf(str,"   PC -> 0x%04x | IR = %d\n\tInstruction: ", PC-1, IR);
+	fputs(str, file);
+	printf("a\n");
 	//Shift the IR to find the opcode[31...26]
 	unsigned int opcode = IR >> 26;
 	
@@ -256,124 +265,156 @@ void callControlUnit()
 			//Calls the specific instruction with your parameters
 			switch(function){
 				case 0:
-					printf("sll\n\t\tOperation: $%d = $%d << %d", rd, rt, shamt); //-------------------------------------TESTED
+					sprintf(str,"sll\n\t\tOperation: $%d = $%d << %d", rd, rt, shamt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_sllv(GPR[rt], shamt);
 					break;
 				case 2:
 					if(rs == 0){
-						printf("srl\n\t\tOperation: $%d = $%d >> %d", rd, rt, shamt); //-------------------------------------TESTED
+						sprintf(str,"srl\n\t\tOperation: $%d = $%d >> %d", rd, rt, shamt); //-------------------------------------TESTED
+						fputs(str, file);
 						GPR[rd] = ula_srlv(GPR[rt], shamt);
 					}
 					else if(rs == 1){
-						printf("rotr\n\t\tOperation: ");
+						sprintf(str,"rotr\n\t\tOperation: ");
+						fputs(str, file);
 					}
 					break;
 				case 3:
-					printf("sra\n\t\tOperation: ");
+					sprintf(str,"sra\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 4:
-					printf("sllv\n\t\tOperation: $%d = $%d << $%d", rd, rt, rs); //-------------------------------------TESTED
+					sprintf(str,"sllv\n\t\tOperation: $%d = $%d << $%d", rd, rt, rs); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_sllv(GPR[rt], GPR[rs]);
 					break;
 				case 6:
 					if(shamt == 0){
-						printf("srlv\n\t\tOperation:  $%d = $%d >> $%d", rd, rt, rs); //-------------------------------------TESTED
+						sprintf(str,"srlv\n\t\tOperation:  $%d = $%d >> $%d", rd, rt, rs); //-------------------------------------TESTED
+						fputs(str, file);
 						GPR[rd] = ula_srlv(GPR[rt], GPR[rs]);
 					}
 					else if(shamt == 1){
-						printf("rotrv\n\t\tOperation: ");
+						sprintf(str,"rotrv\n\t\tOperation: ");
+						fputs(str, file);
 					}
 					break;
 				case 7:
-					printf("srav\n\t\tOperation: ");
+					sprintf(str,"srav\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 8:
-					printf("jr\n\t\tOperation: PC = 0x%04x", GPR[31]); //-------------------------------------TESTED
+					sprintf(str,"jr\n\t\tOperation: PC = 0x%04x", GPR[31]); //-------------------------------------TESTED
+					fputs(str, file);
 					jr(rs);
 					break;
 				case 9:
-					printf("jalr\n\t\tOperation: ");
+					sprintf(str,"jalr\n\t\tOperation: $%d = 0x%04x and PC = $%d = 0x%04x", rd, PC, rs, GPR[rs]); //-------------------------------------TESTED
+					fputs(str, file);
+					jalr(rd, rs);
 					break;
 				case 10:
-					printf("movz\n\t\tOperation: Se $%d = 0 -> $%d = $%d = %d", rt, rd, rs, GPR[rs]); //-------------------------------------TESTED
-					int aux = ula_equal(rt, 0);
-					if (aux == 1){
+					sprintf(str,"movz\n\t\tOperation: Se $%d = 0 -> $%d = $%d = %d", rt, rd, rs, GPR[rs]); //-------------------------------------TESTED
+					fputs(str, file);
+					int comp1 = ula_equal(rt, 0);
+					if (comp1 == 1){
 						GPR[rd] = GPR[rs];
 					}
 					break;
 				case 11:
-					printf("movn\n\t\tOperation: Se $%d != 0 -> $%d = $%d = %d", rt, rd, rs, GPR[rs]); //-------------------------------------TESTED
-					int aux = ula_equal(rt, 0);
-					if (aux == 0){
+					sprintf(str,"movn\n\t\tOperation: Se $%d != 0 -> $%d = $%d = %d", rt, rd, rs, GPR[rs]); //-------------------------------------TESTED
+					fputs(str, file);
+					int comp2 = ula_equal(rt, 0);
+					if (comp2 == 0){
 						GPR[rd] = GPR[rs];
 					}
 					break;
 				case 16:
-					printf("mfhi\n\t\tOperation: $%d = HI", rd); //-------------------------------------TESTED
+					sprintf(str,"mfhi\n\t\tOperation: $%d = HI", rd); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = movefromHILO(1);
 					break;
 				case 17:
-					printf("mthi\n\t\tOperation: HI = $%d", rs); //-------------------------------------TESTED
+					sprintf(str,"mthi\n\t\tOperation: HI = $%d", rs); //-------------------------------------TESTED
+					fputs(str, file);
 					movetoHILO(GPR[rs], 1);
 					break;
 				case 18:
-					printf("mflo\n\t\tOperation: $%d = LO", rd); //-------------------------------------TESTED
+					sprintf(str,"mflo\n\t\tOperation: $%d = LO", rd); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = movefromHILO(0);
 					break;
 				case 19:
-					printf("mtlo\n\t\tOperation: LO = $%d", rs); //-------------------------------------TESTED
+					sprintf(str,"mtlo\n\t\tOperation: LO = $%d", rs); //-------------------------------------TESTED
+					fputs(str, file);
 					movetoHILO(GPR[rs], 0);
 					break;
 				case 24:
-					printf("mult\n\t\tOperation: HI e LO = $%d * $%d", rs, rt);
+					sprintf(str,"mult\n\t\tOperation: HI e LO = $%d * $%d =", rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					ula_mult(GPR[rs], GPR[rt]);
 					break;
 				case 25:
-					printf("multu\n\t\tOperation: ");
+					sprintf(str,"multu\n\t\tOperation: ");
+					fputs(str, file);
+					
 					break;	
 				case 26:
-					printf("div\n\t\tOperation: ");
+					sprintf(str,"div\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 27:
-					printf("divu\n\t\tOperation: ");
+					sprintf(str,"divu\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 32:
-					printf("add\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
+					sprintf(str,"add\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_add(GPR[rs], GPR[rt]);
 					break;	
 				case 33:
-					printf("addu\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
+					sprintf(str,"addu\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_addu(GPR[rs], GPR[rt]);
 					break;
 				case 34:
-					printf("sub\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt); //-------------------------------------TESTED
+					sprintf(str,"sub\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_sub(GPR[rs], GPR[rt]);
 					break;
 				case 35:
-					printf("subu\n\t\tOperation: ");
+					sprintf(str,"subu\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 36:
-					printf("and\n\t\tOperation: $%d = $%d and $%d", rd, rs, rt); //-------------------------------------TESTED
+					sprintf(str,"and\n\t\tOperation: $%d = $%d and $%d", rd, rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_and(GPR[rs], GPR[rt]);
 					break;
 				case 37:
-					printf("or\n\t\tOperation: $%d = $%d or $%d", rd, rs, rt);  //-------------------------------------TESTED
+					sprintf(str,"or\n\t\tOperation: $%d = $%d or $%d", rd, rs, rt);  //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_or(GPR[rs], GPR[rt]);
 					break;
 				case 38:
-					printf("xor\n\t\tOperation: $%d = $%d xor $%d", rd, rs, rt); //-------------------------------------TESTED
+					sprintf(str,"xor\n\t\tOperation: $%d = $%d xor $%d", rd, rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_xor(GPR[rs], GPR[rt]);
 					break;
 				case 39:
-					printf("nor\n\t\tOperation: $%d = $%d nor $%d", rd, rs, rt); //-------------------------------------TESTED
+					sprintf(str,"nor\n\t\tOperation: $%d = $%d nor $%d", rd, rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_nor(GPR[rs], GPR[rt]);
 					break;
 				case 42:
-					printf("slt\n\t\tOperation: $%d < $%d?", rs, rt); //-------------------------------------TESTED
+					sprintf(str,"slt\n\t\tOperation: $%d < $%d?", rs, rt); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_slt(GPR[rs], GPR[rt]);
 					break;
 				case 43:
-					printf("sltu\n\t\tOperation: ");
+					sprintf(str,"sltu\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 			}	
 		}
@@ -383,27 +424,34 @@ void callControlUnit()
 			//Calls the specific instruction with your parameters
 			switch(function){
 				case 0:
-					printf("madd\n\t\tOperation: ");
+					sprintf(str,"madd\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 1:
-					printf("maddu\n\t\tOperation: ");
+					sprintf(str,"maddu\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 2:
-					printf("mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);//-------------------------------------TESTED
+					sprintf(str,"mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);//-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_mul(GPR[rs], GPR[rt]);
 					break;
 				case 4:
-					printf("msub\n\t\tOperation: ");
+					sprintf(str,"msub\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 5:
-					printf("msubu\n\t\tOperation: ");
+					sprintf(str,"msubu\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 32:
-					printf("clz\n\t\tOperation: $%d = quantidade de 0's de $%d", rd, rs); //-------------------------------------TESTED
+					sprintf(str,"clz\n\t\tOperation: $%d = quantidade de 0's de $%d", rd, rs); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_clzclo(GPR[rs], 0); 
 					break;
 				case 33:
-					printf("clo\n\t\tOperation: $%d = quantidade de 1's de $%d", rd, rs); //-------------------------------------TESTED
+					sprintf(str,"clo\n\t\tOperation: $%d = quantidade de 1's de $%d", rd, rs); //-------------------------------------TESTED
+					fputs(str, file);
 					GPR[rd] = ula_clzclo(GPR[rs], 1);
 					break;
 			}	
@@ -414,20 +462,25 @@ void callControlUnit()
 			//Calls the specific instruction with your parameters
 			switch(function){
 				case 0:
-					printf("ext\n\t\tOperation: ");
+					sprintf(str,"ext\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 4:
-					printf("ins\n\t\tOperation: ");
+					sprintf(str,"ins\n\t\tOperation: ");
+					fputs(str, file);
 					break;
 				case 32:
 					if(shamt == 16){
-						printf("seb\n\t\tOperation: ");
+						sprintf(str,"seb\n\t\tOperation: ");
+						fputs(str, file);
 					}
 					else if(shamt == 24){
-						printf("seh\n\t\tOperation: ");
+						sprintf(str,"seh\n\t\tOperation: ");
+						fputs(str, file);
 					}
 					else if(shamt == 2){
-						printf("wsbh\n\t\tOperation: ");
+						sprintf(str,"wsbh\n\t\tOperation: ");
+						fputs(str, file);
 					}
 					break;
 			}	
@@ -445,65 +498,82 @@ void callControlUnit()
 		//Calls the specific instruction with your parameters
 		switch(opcode){
 			case 1:
-				printf("bltz\n\t\tOperation: ");
+				sprintf(str,"bltz\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 4:
-				printf("beq\n\t\tOperation: $%d == $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
+				sprintf(str,"beq\n\t\tOperation: $%d == $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
+				fputs(str, file);
 				beq(GPR[rs], GPR[rt], immediate);
 				break;
 			case 5:
-				printf("bne\n\t\tOperation: $%d != $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
+				sprintf(str,"bne\n\t\tOperation: $%d != $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
+				fputs(str, file);
 				bne(GPR[rs], GPR[rt], immediate);
 				break;
 			case 7:
-				printf("bgtz\n\t\tOperation: ");
+				sprintf(str,"bgtz\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 8:
-				printf("addi\n\t\tOperation: $%d = $%d + %d ", rt, rs, immediate); //-------------------------------------TESTED
+				sprintf(str,"addi\n\t\tOperation: $%d = $%d + %d ", rt, rs, immediate); //-------------------------------------TESTED
+				fputs(str, file);
 				GPR[rt] = ula_add(GPR[rs], immediate);
 				break;
 			case 9:
-				printf("addiu\n\t\tOperation: ");
+				sprintf(str,"addiu\n\t\tOperation: ");
 				break;
 			case 10:
-				printf("slti\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);//-------------------------------------TESTED
+				sprintf(str,"slti\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);//-------------------------------------TESTED
+				fputs(str, file);
 				GPR[rt] = ula_slt(GPR[rs], immediate);
 				break;
 			case 11:
-				printf("sltiu\n\t\tOperation: $%d = $%d < $%d ", rt, rs, immediate); //-------------------------------------TESTED
+				sprintf(str,"sltiu\n\t\tOperation: $%d = $%d < $%d ", rt, rs, immediate); //-------------------------------------TESTED
+				fputs(str, file);
 				GPR[rt] = ula_sltu(GPR[rs], immediate);
 				break;
 			case 12:
-				printf("andi\n\t\tOperation: $%d = $%d and %d", rt, rs, immediate); //-------------------------------------TESTED
+				sprintf(str,"andi\n\t\tOperation: $%d = $%d and %d", rt, rs, immediate); //-------------------------------------TESTED
+				fputs(str, file);
 				GPR[rt] = ula_and(GPR[rs], immediate);
 				break;
 			case 13:
-				printf("ori\n\t\tOperation: ");
+				sprintf(str,"ori\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 14:
-				printf("xori\n\t\tOperation: ");
+				sprintf(str,"xori\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 15:
-				printf("lui\n\t\tOperation: ");
+				sprintf(str,"lui\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 32:
-				printf("lb\n\t\tOperation: ");
+				sprintf(str,"lb\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 33:
-				printf("lh\n\t\tOperation: ");
+				sprintf(str,"lh\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 35:
-				printf("lw\n\t\tOperation: $%d <- %d($%d)", rt, immediate, rs); //-------------------------------------TESTED
+				sprintf(str,"lw\n\t\tOperation: $%d <- %d($%d)", rt, immediate, rs); //-------------------------------------TESTED
+				fputs(str, file);
 				lw(rt, immediate, rs);
 				break;
 			case 40:
-				printf("sb\n\t\tOperation: ");
+				sprintf(str,"sb\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 41:
-				printf("sh\n\t\tOperation: ");
+				sprintf(str,"sh\n\t\tOperation: ");
+				fputs(str, file);
 				break;
 			case 43:
-				printf("sw\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);//-------------------------------------TESTED
+				sprintf(str,"sw\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);//-------------------------------------TESTED
+				fputs(str, file);
 				sw(GPR[rt], immediate, rs);
 				break;
 		}
@@ -516,16 +586,18 @@ void callControlUnit()
 		//Calls the specific instruction with your parameters
 		switch(opcode){
 			case 2:
-				printf("j\n\t\tOperation: PC = 0x%04x", address);//-------------------------------------TESTED
+				sprintf(str,"j\n\t\tOperation: PC = 0x%04x", address);//-------------------------------------TESTED
+				fputs(str, file);
 				j(address);
 				break;
 			case 3:
-				printf("jal\n\t\tOperation: $ra = 0x%04x and PC = 0x%04x ", PC, address);//-------------------------------------TESTED
+				sprintf(str,"jal\n\t\tOperation: $ra = 0x%04x and PC = 0x%04x ", PC, address);//-------------------------------------TESTED
+				fputs(str, file);
 				jal(address);
 				break;
 		}
 	}
-	printf("\n\n");
+	fputs("\n\n", file);
 }
 
 //Takes the binary range
@@ -544,15 +616,18 @@ int getBinaryRange(int nBits, char signal)
 int ula_add(int op1, int op2)
 {
 	int sum = op1 + op2;
-	printf("= %d + %d = %d", op1, op2, sum);
+	char str[50];
+	sprintf(str, "= %d + %d = %d", op1, op2, sum);
+	printf("= %d + %d = %d\n", op1, op2, sum);
+	fputs(str,file);
 	//Check flag conditions
 	if(sum == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(sum > getBinaryRange(32, '+') || sum < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return sum;
 }
@@ -561,15 +636,17 @@ int ula_add(int op1, int op2)
 int ula_mul(int op1, int op2)
 {
 	int mult = op1 * op2;
-	printf(" = %d * %d = %d", op1, op2, mult);
+	char str[50];
+	sprintf(str, " = %d * %d = %d", op1, op2, mult);
+	fputs(str,file);
 	//Check flag conditions
 	if(mult == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(mult > getBinaryRange(32, '+') || mult < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return mult;
 }
@@ -577,6 +654,9 @@ int ula_mul(int op1, int op2)
 int ula_div(int op1, int op2)
 {
 	int div = 0;
+	char str[50];
+	sprintf(str, "= %d / %d = %d", op1, op2, div);
+	fputs(str,file);
 	div = op1/op2;
 	LO = div;
 	int mod = (op1%op2);
@@ -602,15 +682,17 @@ int ula_equal(int op1, int op2)
 int ula_sub(int op1, int op2)
 {
 	int sub = op1 - op2;
-	printf("= %d - %d = %d", op1, op2, sub);
+	char str[50];
+	sprintf(str, "= %d - %d = %d", op1, op2, sub);
+	fputs(str,file);
 	//Check flag conditions
 	if(sub == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(sub > getBinaryRange(32, '+') || sub < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return sub;
 }
@@ -618,16 +700,19 @@ int ula_sub(int op1, int op2)
 //The beq instruction implementation
 void beq(int op1, int op2, int offset)
 {
-	printf("%d == %d? ", op1, op2);
+	char str[50];
+	sprintf(str, "%d == %d? ", op1, op2);
+	fputs(str,file);
 	int comparation = ula_equal(op1, op2);
 	if(comparation == 1){
-		printf("Yes");
-		printf(" -> PC = 0x%04x + (%d)",PC,offset);
+		fputs("Yes", file);
+		sprintf(str, " -> PC = 0x%04x + (%d)",PC,offset);
+		fputs(str,file);
 		PC--;
 		PC = PC + offset;
 	}
 	else
-		printf("No");
+		fputs("No", file);
 	
 }
 
@@ -635,75 +720,93 @@ void beq(int op1, int op2, int offset)
 //The bne instruction implementation
 void bne(int op1, int op2, int offset)
 {
-	printf("%d != %d? ", op1, op2);
+	char str[50];
+	sprintf(str, "%d != %d? ", op1, op2);
+	fputs(str,file);
 	int comparation = ula_equal(op1, op2);
 	if(comparation == 0){
-		printf("Yes (Flag zero activated)");
-		printf(" -> PC = 0x%04x + (%d)",PC,offset);
+		fputs("Yes (Flag zero activated)", file);
+		sprintf(str, " -> PC = 0x%04x + (%d)",PC,offset);
+		fputs(str,file);
 		PC--;
 		PC = PC + offset;
 	}
 	else
-		printf("No");
+		fputs("No", file);
 }
 
 //The slt instruction implementation
 int ula_slt(int op1, int op2)
 {
-	printf("%d < %d? ", op1, op2);
+	char str[50];
+	sprintf(str, "%d < %d? ", op1, op2);
+	fputs(str,file);
 	if(op1 < op2){
-		printf(" Yes.");
+		fputs(" Yes.", file);
 		return 1;
 	}
 	else
-		printf(" No.");
+		fputs(" No.", file);
 	return 0;
 }
 
 //The sltu instruction implementation
 unsigned int ula_sltu(unsigned int op1, unsigned int op2)
 {
-	printf("%d < %d? ", op1, op2);
+	char str[50];
+	sprintf(str, "%d < %d? ", op1, op2);
+	fputs(str,file);
 	if(op1 < op2){
-		printf(" Yes.");
+		fputs(" Yes.", file);
 		return 1;
 	}
 	else
-		printf(" No.");
+		fputs(" No.", file);
 	return 0;
 }
 
 
 //The j instruction implementation
-void j(int address)
-{
+void j(int address){
 	PC = address;
 }
 
-void sw(int value, int offset, int baseRegister)
-{
+void sw(int value, int offset, int baseRegister){
+	char str[50];
 	int address = GPR[baseRegister];
-	printf(" = %d -> (0x%04x + %d) ", value, address, offset);
+	sprintf(str, " = %d -> (0x%04x + %d) ", value, address, offset);
+	fputs(str,file);
 	memory[address + offset] = value;
 	
 	if(baseRegister == 29){
 		int i;
-		printf("\n\t\t\tSTACK\n");
-		for(i = GPR[30]; i >= GPR[29]; i--)
-			printf("\t\t\t0x%04x -> %d\n", i, memory[i]);
+		fputs("\n\t\t\tSTACK\n", file);
+		for(i = GPR[30]; i >= GPR[29]; i--){
+			sprintf(str, "\t\t\t0x%04x -> %d\n", i, memory[i]);
+			fputs(str,file);
+		}
+	}
+	else{
+		wordsQuantity++;
+		int newAddress = (address + offset);
+		if(newAddress > next_free_address)
+			next_free_address = newAddress;	
 	}
 }
 
-void lw(int regist, int offset, int baseRegister)
-{
+void lw(int regist, int offset, int baseRegister){
+	char str[50];
 	int address = GPR[baseRegister];
-	printf(" = %d <- (0x%04x + %d) ", regist, address, offset);
+	sprintf(str, " = %d <- (0x%04x + %d) ", regist, address, offset);
+	fputs(str,file);
 	GPR[regist]= memory[address + offset];
 	if(baseRegister == 29){
 		int i;
-		printf("\n\t\t\tSTACK\n");
-		for(i = GPR[30]; i >= GPR[29]; i--)
-			printf("\t\t\t0x%04x -> %d\n", i, memory[i]);
+		fputs("\n\t\t\tSTACK\n", file);
+		for(i = GPR[30]; i >= GPR[29]; i--){
+			sprintf(str, "\t\t\t0x%04x -> %d\n", i, memory[i]);
+			fputs(str,file);
+		}
 	}
 }
 
@@ -716,8 +819,8 @@ void jr(int regist){
 	PC = GPR[regist];
 }
 
-
 int ula_clzclo(int op, int op2){
+	char str[50];
 	int zeros = 0, i, ones = 0;
 	int aux = 0;
 	for(i = 0; i < 32; i++){
@@ -729,109 +832,122 @@ int ula_clzclo(int op, int op2){
 			ones++;
 	}
 	if(op2==0){
-		printf(" = %d", zeros);
+		sprintf(str, " = %d", zeros);
+		fputs(str,file);
 		return zeros;
 	}
-		printf(" = %d", ones);
+		sprintf(str, " = %d", ones);
+		fputs(str,file);
 		return ones;
 }
 
-
 unsigned int ula_addu(unsigned int op1, unsigned int op2){
+	char str[50];
 	unsigned sum = op1 + op2;
-	printf("= %d + %d = %d", op1, op2, sum);
+	sprintf(str, "= %d + %d = %d", op1, op2, sum);
+	fputs(str,file);
 	//Check flag conditions
 	if(sum == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(sum > getBinaryRange(32, '+') || sum < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return sum;
 }
 
-unsigned subu (unsigned int op1, unsigned int op2)
-{
-
+unsigned subu (unsigned int op1, unsigned int op2){
+	char str[50];
 	int sub = op1 - op2;
-	printf("= %d - %d = %d", op1, op2, sub);
+	sprintf(str, "= %d - %d = %d", op1, op2, sub);
+	fputs(str,file);
 	//Check flag conditions
 	if(sub == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(sub > getBinaryRange(32, '+') || sub < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return sub;
 }
 
 int ula_and(int op1, int op2){
+	char str[50];
 	int ula_and = (op1 & op2);
-	printf(" = %d and %d = %d", op1, op2, ula_and);
+	sprintf(str, " = %d and %d = %d", op1, op2, ula_and);
+	fputs(str,file);
 	if(ula_and > getBinaryRange(32, '+') || ula_and < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return ula_and;
 }
 
 int ula_nor(int op1, int op2){
 	int ula_nor = (~(op1 | op2));
-	printf(" = %d nor %d = %d", op1, op2, ula_nor);
+	char str[50];
+	sprintf(str, " = %d nor %d = %d", op1, op2, ula_nor);
+	fputs(str,file);
 	if(ula_nor == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(ula_nor > getBinaryRange(32, '+') || ula_nor < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return ula_nor;
 }
 
 int ula_or(int op1, int op2){
 	int ula_or = (op1 | op2); 
-	printf(" = %d or %d = %d", op1, op2, ula_or);
+	char str[50];
+	sprintf(str, " = %d or %d = %d", op1, op2, ula_or);
+	fputs(str,file);
 	if(ula_or == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(ula_or > getBinaryRange(32, '+') || ula_or < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return ula_or;
 }
 
 int ula_xor(int op1, int op2){
+	char str[50];
 	int ula_xor = (op1 ^ op2);
-	printf(" = %d xor %d = %d", op1, op2, ula_xor);
+	sprintf(str, " = %d xor %d = %d", op1, op2, ula_xor);
+	fputs(str,file);
 	if(ula_xor == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(ula_xor > getBinaryRange(32, '+') || ula_xor < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return ula_xor;
 }
 
 unsigned int ula_divu(unsigned int op1, unsigned int op2){
 	int div = 0;
+	char str[50];
 	div = op1/op2;
-	printf(" = %d / %d = %d", op1, op2, div);
+	sprintf(str, " = %d / %d = %d", op1, op2, div);
+	fputs(str,file);
 	if(div == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(div > getBinaryRange(32, '+') || div < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	LO = div;
 	int mod = (op1%op2);
@@ -841,62 +957,81 @@ unsigned int ula_divu(unsigned int op1, unsigned int op2){
 
 unsigned int ula_multu(unsigned int op1, unsigned int op2){
 	int mult = op1 * op2;
-	printf(" = %d * %d = %d", op1, op2, mult);
+	char str[50];
+	sprintf(str, " = %d * %d = %d", op1, op2, mult);
+	fputs(str,file);
 	//Check flag conditions
 	if(mult == 0){
 		flags[0] = 1;
-		printf(" (Flag zero activated)");
+		fputs(" (Flag zero activated)", file);
 	}
 	else if(mult > getBinaryRange(32, '+') || mult < getBinaryRange(32, '-')){
 		flags[3] = 1;
-		printf(" (Flag overflow activated)");
+		fputs(" (Flag overflow activated)", file);
 	}
 	return mult;
 }
 
 int ula_sllv(int op1, int op2){
+	char str[50];
 	int sllv = (op1 << op2);
-	printf(" = %d << %d = %d", op1, op2, sllv);
+	sprintf(str, " = %d << %d = %d", op1, op2, sllv);
+	fputs(str,file);
 	return sllv;
 }
 
 int ula_srlv(int op1, int op2){
+	char str[50];
 	int srlv = (op1 >> op2);
-	printf(" = %d >> %d = %d", op1, op2, srlv);
+	sprintf(str, " = %d >> %d = %d", op1, op2, srlv);
+	fputs(str,file);
 	return srlv;
 }
 
 int movefromHILO(int op){
+	char str[50];
 	if(op==1){
-		printf(" = HI = %d", HI);
+		sprintf(str, " = HI = %d", HI);
+		fputs(str,file);
 		return HI;
 	}else{
-		printf(" = LO = %d", LO);
+		sprintf(str, " = LO = %d", LO);
+		fputs(str,file);
 		return LO;
 	}
 }
 
 void movetoHILO(int value, int op){
-		if(op==1){
-		printf(" = HI = rs = %d", value);
+	char str[50];
+	if(op==1){
+		sprintf(str, " = HI = rs = %d", value);
+		fputs(str,file);
 		HI = value;
 	}else{
-		printf(" = LO = rs = %d", value);
+		sprintf(str, " = LO = rs = %d", value);
+		fputs(str,file);
 		LO = value;
 	}
 }
 
 void ula_mult(int op1, int op2){
-	long int produt = op1 * op2;
+	long long int produt = op1 * op2;
+	char str[50];
+
 	if(produt < getBinaryRange(32, '+')){
-		printf(" = HI = 0, LO = %d", produt);
+		sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+		fputs(str,file);
 		LO = produt;
 		HI = 0;
 	}else{	
-		//HI = produt >> 32;
-	//	int shift = produt << 32;
-	//	LO = shift >> 32;		
-		printf(" = HI = %d e LO = %d", HI, LO);
+	LO = produt & 4294967295;
+	HI = produt >> 32;	
+	sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+	fputs(str,file);
 	}
 }
 
+void jalr(int rd, int rs){
+	GPR[rd] = PC;
+	PC = GPR[rs];
+}

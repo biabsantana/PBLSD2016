@@ -243,7 +243,6 @@ void callControlUnit()
 	char str[100];
 	sprintf(str,"   PC -> 0x%04x | IR = %d\n\tInstruction: ", PC-1, IR);
 	fputs(str, file);
-	printf("a\n");
 	//Shift the IR to find the opcode[31...26]
 	unsigned int opcode = IR >> 26;
 	
@@ -618,7 +617,6 @@ int ula_add(int op1, int op2)
 	int sum = op1 + op2;
 	char str[50];
 	sprintf(str, "= %d + %d = %d", op1, op2, sum);
-	printf("= %d + %d = %d\n", op1, op2, sum);
 	fputs(str,file);
 	//Check flag conditions
 	if(sum == 0){

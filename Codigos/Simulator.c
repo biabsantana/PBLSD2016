@@ -360,8 +360,9 @@ void callControlUnit()
 					
 					break;	
 				case 26:
-					sprintf(str,"div\n\t\tOperation: ");
+					sprintf(str,"div\n\t\tOperation: $%d/$%d ", rs, rt);
 					fputs(str, file);
+					ula_div(GPR[rs], GPR[rt]);
 					break;
 				case 27:
 					sprintf(str,"divu\n\t\tOperation: ");
@@ -653,13 +654,25 @@ int ula_div(int op1, int op2)
 {
 	int div = 0;
 	char str[50];
+	
+	div = op1/op2;
 	sprintf(str, "= %d / %d = %d", op1, op2, div);
 	fputs(str,file);
-	div = op1/op2;
+	
+	if(div == 0){
+		flags[0] = 1;
+		fputs(" (Flag zero activated)", file);
+	}
+	else if(div > getBinaryRange(32, '+') || div < getBinaryRange(32, '-')){
+		flags[3] = 1;
+		fputs(" (Flag overflow activated)", file);
+	}
 	LO = div;
 	int mod = (op1%op2);
 	HI = mod;
 	
+	sprintf(str, " | HI = %d LO = %d", HI, LO);
+	fputs(str,file);	
 	return div;
 }
 
@@ -734,8 +747,7 @@ void bne(int op1, int op2, int offset)
 }
 
 //The slt instruction implementation
-int ula_slt(int op1, int op2)
-{
+int ula_slt(int op1, int op2){
 	char str[50];
 	sprintf(str, "%d < %d? ", op1, op2);
 	fputs(str,file);
@@ -749,8 +761,7 @@ int ula_slt(int op1, int op2)
 }
 
 //The sltu instruction implementation
-unsigned int ula_sltu(unsigned int op1, unsigned int op2)
-{
+unsigned int ula_sltu(unsigned int op1, unsigned int op2){
 	char str[50];
 	sprintf(str, "%d < %d? ", op1, op2);
 	fputs(str,file);
@@ -762,7 +773,6 @@ unsigned int ula_sltu(unsigned int op1, unsigned int op2)
 		fputs(" No.", file);
 	return 0;
 }
-
 
 //The j instruction implementation
 void j(int address){
@@ -950,6 +960,9 @@ unsigned int ula_divu(unsigned int op1, unsigned int op2){
 	LO = div;
 	int mod = (op1%op2);
 	HI = mod;
+	
+	sprintf(str, " | HI = %d LO = %d", HI, LO);
+	fputs(str,file);
 	return div;
 }
 

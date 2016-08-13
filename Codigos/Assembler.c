@@ -146,7 +146,8 @@ int assemblyChoice()
     //Error on file open
     if(file == NULL){
         informError(0, 0);
-        free(file);
+        fclose(file);
+        sleep(1);
         return 0;
     }
 
@@ -689,8 +690,10 @@ int checksAssembly()
 //Informs the program read error.
 void informError(int code, int lineNumber)
 {
-    printf("\n-------------------------------------------------------------------------------------------------------------------");
-    printf("\nPROGRAM NOT ASSEMBLED");
+	if(code != 0){
+	    printf("\n-------------------------------------------------------------------------------------------------------------------");
+	    printf("\nPROGRAM NOT ASSEMBLED");
+	}
 
     if(code == 0)
         printf("\n-> ERROR(0): THIS FILE DOESN'T EXISTS");

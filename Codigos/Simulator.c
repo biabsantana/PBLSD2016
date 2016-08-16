@@ -16,9 +16,10 @@ int ula_add(int op1, int op2);
 unsigned int ula_addu(unsigned int op1, unsigned int op2);
 int ula_clzclo(int op, int op2);
 int ula_sub (int op1, int op2);
-unsigned subu (unsigned int op1, unsigned int op2);
-int ula_seh(int op);
-int ula_seb(int op);
+unsigned ula_subu (unsigned int op1, unsigned int op2);
+void lui(int op1, int op2);
+void ula_seh(int op1, int op2);
+void ula_seb(int op1, int op2);
 int ula_and(int op1, int op2);
 int ula_nor(int op1, int op2);
 int ula_or(int op1, int op2);
@@ -35,13 +36,18 @@ int ula_slt(int op1, int op2);
 unsigned int ula_sltu(unsigned int op1, unsigned int op2);
 int ula_equal(int op1, int op2);
 //------------------ULA OPERATIONS-----------------------------------
-
-
+void madd(int op1, int op2);
+void maddu(unsigned int op1, unsigned int op2);
+void msub(int op1, int op2);
+void msubu(unsigned int op1, unsigned int op2);
+int rotr(int op2, int offset);
+int rotrv(int op2, int op3);
 //------------------ACCUMULATOR-----------------------------------
 int movefromHILO(int op);
 void movetoHILO(int value, int op);
 //------------------ACCUMULATOR-----------------------------------
-
+void bgtz(int op1, int offset);
+void bltz(int op1, int offset);
 //------------------BRANCHS OPERATIONS-------------------------------
 void beq(int op1, int op2, int offset);
 void bne(int op1, int op2, int offset);
@@ -50,7 +56,11 @@ void bne(int op1, int op2, int offset);
 
 //------------------LOAD/STORE OPERATIONS----------------------------
 void sw(int value, int offset, int baseRegister);
+void sh(int value, int offset, int baseRegister);
+void sb(int value, int offset, int baseRegister);
 void lw(int regist, int offset, int baseRegister);
+void lh(int regist, int offset, int baseRegister);
+void lb(int regist, int offset, int baseRegister);
 //------------------LOAD/STORE OPERATIONS----------------------------
 
 
@@ -275,13 +285,15 @@ void callControlUnit()
 						GPR[rd] = ula_srlv(GPR[rt], shamt);
 					}
 					else if(rs == 1){
-						sprintf(str,"rotr\n\t\tOperation: ");
+						sprintf(str,"rotr\n\t\tOperation:  %d <<  %d x (right) %d", rd, rt, shamt); //------------------------------------- TESTED
 						fputs(str, file);
+						GPR[rd] = rotr(GPR[rt], shamt);
 					}
 					break;
 				case 3:
-					sprintf(str,"sra\n\t\tOperation: ");
+					sprintf(str,"sra\n\t\tOperation: $%d = $%d >> %d", rd, rt, shamt);
 					fputs(str, file);
+					GPR[rd] = ula_srlv(GPR[rt], shamt);
 					break;
 				case 4:
 					sprintf(str,"sllv\n\t\tOperation: $%d = $%d << $%d", rd, rt, rs); //-------------------------------------TESTED
@@ -295,13 +307,15 @@ void callControlUnit()
 						GPR[rd] = ula_srlv(GPR[rt], GPR[rs]);
 					}
 					else if(shamt == 1){
-						sprintf(str,"rotrv\n\t\tOperation: ");
+						sprintf(str,"rotrv\n\t\tOperation:%d <<  %d x (right) %d", rd, rt, rs); //------------------------------------- TESTED
 						fputs(str, file);
+						GPR[rd] = rotrv(GPR[rt], GPR[rs]);
 					}
 					break;
 				case 7:
-					sprintf(str,"srav\n\t\tOperation: ");
+					sprintf(str,"srav\n\t\tOperation: $%d = $%d >> $%d", rd, rt, rs); //------------------------------------- TESTED
 					fputs(str, file);
+					GPR[rd] = ula_srlv(GPR[rt], GPR[rs]);
 					break;
 				case 8:
 					sprintf(str,"jr\n\t\tOperation: PC = 0x%04x", GPR[31]); //-------------------------------------TESTED
@@ -355,8 +369,9 @@ void callControlUnit()
 					ula_mult(GPR[rs], GPR[rt]);
 					break;
 				case 25:
-					sprintf(str,"multu\n\t\tOperation: ");
+					sprintf(str,"multu\n\t\tOperation: HI e LO = $%d * $%d =", rs, rt); //-------------------------------------TESTED
 					fputs(str, file);
+					ula_multu(GPR[rs], GPR[rt]);
 					
 					break;	
 				case 26:
@@ -365,8 +380,10 @@ void callControlUnit()
 					ula_div(GPR[rs], GPR[rt]);
 					break;
 				case 27:
-					sprintf(str,"divu\n\t\tOperation: ");
+					sprintf(str,"divu\n\t\tOperation: $%d/$%d ", rs, rt);
 					fputs(str, file);
+					ula_divu(GPR[rs], GPR[rt]);
+					
 					break;
 				case 32:
 					sprintf(str,"add\n\t\tOperation: $%d = $%d + $%d ", rd, rs, rt); //-------------------------------------TESTED
@@ -384,8 +401,9 @@ void callControlUnit()
 					GPR[rd] = ula_sub(GPR[rs], GPR[rt]);
 					break;
 				case 35:
-					sprintf(str,"subu\n\t\tOperation: ");
+					sprintf(str,"subu\n\t\tOperation: $%d = $%d - $%d", rd, rs, rt); //------------------------------------- TESTED
 					fputs(str, file);
+					GPR[rd] = ula_subu(GPR[rs], GPR[rt]);
 					break;
 				case 36:
 					sprintf(str,"and\n\t\tOperation: $%d = $%d and $%d", rd, rs, rt); //-------------------------------------TESTED
@@ -413,8 +431,9 @@ void callControlUnit()
 					GPR[rd] = ula_slt(GPR[rs], GPR[rt]);
 					break;
 				case 43:
-					sprintf(str,"sltu\n\t\tOperation: ");
+					sprintf(str,"sltu\n\t\tOperation: $%d = $%d < $%d ", rd, rs, rt); //------------------------------------- TESTED 
 					fputs(str, file);
+					GPR[rd] = ula_sltu(GPR[rs], GPR[rt]);
 					break;
 			}	
 		}
@@ -424,12 +443,15 @@ void callControlUnit()
 			//Calls the specific instruction with your parameters
 			switch(function){
 				case 0:
-					sprintf(str,"madd\n\t\tOperation: ");
+					sprintf(str,"madd\n\t\tOperation: HI e LO += $%d * $%d =", rs, rt);
 					fputs(str, file);
+					madd(GPR[rs],GPR[rt]);
 					break;
 				case 1:
-					sprintf(str,"maddu\n\t\tOperation: ");
+					sprintf(str,"maddu\n\t\tOperation: HI e LO += $%d * $%d =", rs, rt);
 					fputs(str, file);
+					madd(GPR[rs],GPR[rt]);
+					
 					break;
 				case 2:
 					sprintf(str,"mul\n\t\tOperation: $%d = $%d * $%d", rd, rs, rt);//-------------------------------------TESTED
@@ -437,12 +459,14 @@ void callControlUnit()
 					GPR[rd] = ula_mul(GPR[rs], GPR[rt]);
 					break;
 				case 4:
-					sprintf(str,"msub\n\t\tOperation: ");
+					sprintf(str,"msub\n\t\tOperation: HI e LO -= $%d * $%d =", rs, rt);
 					fputs(str, file);
+					msub(GPR[rs], GPR[rt]);
 					break;
 				case 5:
-					sprintf(str,"msubu\n\t\tOperation: ");
+					sprintf(str,"msubu\n\t\tOperation: HI e LO -= $%d * $%d =", rs, rt);
 					fputs(str, file);
+					msubu(GPR[rs], GPR[rt]);
 					break;
 				case 32:
 					sprintf(str,"clz\n\t\tOperation: $%d = quantidade de 0's de $%d", rd, rs); //-------------------------------------TESTED
@@ -471,12 +495,14 @@ void callControlUnit()
 					break;
 				case 32:
 					if(shamt == 16){
-						sprintf(str,"seb\n\t\tOperation: ");
+						sprintf(str,"seb\n\t\tOperation: %d = %d << 24", rd, rt);
 						fputs(str, file);
+						ula_seb(rd, rt);
 					}
 					else if(shamt == 24){
-						sprintf(str,"seh\n\t\tOperation: ");
+						sprintf(str,"seh\n\t\tOperation:%d = %d << 16", rd, rt );//-------------------------------------TESTED
 						fputs(str, file);
+						ula_seh(rd, rt); 
 					}
 					else if(shamt == 2){
 						sprintf(str,"wsbh\n\t\tOperation: ");
@@ -498,8 +524,9 @@ void callControlUnit()
 		//Calls the specific instruction with your parameters
 		switch(opcode){
 			case 1:
-				sprintf(str,"bltz\n\t\tOperation: ");
+				sprintf(str,"bltz\n\t\tOperation: if %d < 0 -> %d ", rs, immediate );
 				fputs(str, file);
+				bltz(GPR[rs], immediate);
 				break;
 			case 4:
 				sprintf(str,"beq\n\t\tOperation: $%d == $%d -> ", rs, rt, immediate);//-------------------------------------TESTED
@@ -512,8 +539,9 @@ void callControlUnit()
 				bne(GPR[rs], GPR[rt], immediate);
 				break;
 			case 7:
-				sprintf(str,"bgtz\n\t\tOperation: ");
+				sprintf(str,"bgtz\n\t\tOperation: if %d > 0 -> %d ", rs, immediate ); 
 				fputs(str, file);
+				bgtz(GPR[rs], immediate);
 				break;
 			case 8:
 				sprintf(str,"addi\n\t\tOperation: $%d = $%d + %d ", rt, rs, immediate); //-------------------------------------TESTED
@@ -521,7 +549,9 @@ void callControlUnit()
 				GPR[rt] = ula_add(GPR[rs], immediate);
 				break;
 			case 9:
-				sprintf(str,"addiu\n\t\tOperation: ");
+				sprintf(str,"addiu\n\t\tOperation: $%d = $%d + %d", rt, rs, immediate); //------------------------------------- TESTED
+				fputs(str, file);
+				GPR[rt] = ula_addu(GPR[rs], immediate);
 				break;
 			case 10:
 				sprintf(str,"slti\n\t\tOperation: $%d = $%d < $%d", rt, rs, immediate);//-------------------------------------TESTED
@@ -539,24 +569,29 @@ void callControlUnit()
 				GPR[rt] = ula_and(GPR[rs], immediate);
 				break;
 			case 13:
-				sprintf(str,"ori\n\t\tOperation: ");
+				sprintf(str,"ori\n\t\tOperation: $%d = $%d or $%d", rt, rs, immediate); //------------------------------------- TESTED
 				fputs(str, file);
+				GPR[rt] = ula_or(GPR[rs], immediate);
 				break;
 			case 14:
-				sprintf(str,"xori\n\t\tOperation: ");
+				sprintf(str,"xori\n\t\tOperation: $%d = $%d or $%d", rt, rs, immediate);
 				fputs(str, file);
+				GPR[rt] = ula_xor(GPR[rs], immediate);
 				break;
 			case 15:
-				sprintf(str,"lui\n\t\tOperation: ");
+				sprintf(str,"lui\n\t\tOperation: %d = %d << 16 ", rt, immediate); //------------------------------------- TESTED
 				fputs(str, file);
+				lui(rt, immediate);
 				break;
 			case 32:
-				sprintf(str,"lb\n\t\tOperation: ");
+				sprintf(str,"lb\n\t\tOperation: $%d <- %d($%d) >> 8", rt, immediate, rs);
 				fputs(str, file);
+				lb(rt, immediate, rs);
 				break;
 			case 33:
-				sprintf(str,"lh\n\t\tOperation: ");
+				sprintf(str,"lh\n\t\tOperation: $%d <- %d($%d) >> 16", rt, immediate, rs); 
 				fputs(str, file);
+				lh(rt, immediate, rs);
 				break;
 			case 35:
 				sprintf(str,"lw\n\t\tOperation: $%d <- %d($%d)", rt, immediate, rs); //-------------------------------------TESTED
@@ -564,15 +599,17 @@ void callControlUnit()
 				lw(rt, immediate, rs);
 				break;
 			case 40:
-				sprintf(str,"sb\n\t\tOperation: ");
+				sprintf(str,"sb\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);
 				fputs(str, file);
+				sb(GPR[rt], immediate, rs);
 				break;
 			case 41:
-				sprintf(str,"sh\n\t\tOperation: ");
+				sprintf(str,"sh\n\t\tOperation: $%d >> 16 -> %d($%d)", rt, immediate, rs);
 				fputs(str, file);
+				sh(GPR[rt], immediate, rs);
 				break;
 			case 43:
-				sprintf(str,"sw\n\t\tOperation: $%d -> %d($%d)", rt, immediate, rs);//-------------------------------------TESTED
+				sprintf(str,"sw\n\t\tOperation: $%d >> 8-> %d($%d)", rt, immediate, rs);//-------------------------------------TESTED
 				fputs(str, file);
 				sw(GPR[rt], immediate, rs);
 				break;
@@ -605,9 +642,10 @@ int getBinaryRange(int nBits, char signal)
 {
 	nBits--;
 	if(signal == '+')
-		return pow(2,nBits) -1;
-	else if(signal == '-')
+		return pow(2,nBits) - 1;
+	else if(signal == '-'){
 		return pow(2,nBits)*(-1);
+	}
 	return 0;
 	
 }
@@ -624,12 +662,14 @@ int ula_add(int op1, int op2)
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(sum > getBinaryRange(32, '+') || sum < getBinaryRange(32, '-')){
+	else if(sum > getBinaryRange(32, '+')){
+		printf("%d %d", sum, getBinaryRange(32, '+'));
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
 	return sum;
 }
+
 
 //The multiplication logic in ULA
 int ula_mul(int op1, int op2)
@@ -643,7 +683,7 @@ int ula_mul(int op1, int op2)
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(mult > getBinaryRange(32, '+') || mult < getBinaryRange(32, '-')){
+	else if(mult > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -663,7 +703,7 @@ int ula_div(int op1, int op2)
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(div > getBinaryRange(32, '+') || div < getBinaryRange(32, '-')){
+	else if(div > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -701,7 +741,7 @@ int ula_sub(int op1, int op2)
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(sub > getBinaryRange(32, '+') || sub < getBinaryRange(32, '-')){
+	else if(sub > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -802,12 +842,95 @@ void sw(int value, int offset, int baseRegister){
 	}
 }
 
+void sh(int value, int offset, int baseRegister){
+	char str[50];
+	int address = GPR[baseRegister];
+	sprintf(str, " = %d -> (0x%04x + %d) ", value, address, offset);
+	fputs(str,file);
+	memory[address + offset] = (value & getBinaryRange(16, '+'));
+	
+	if(baseRegister == 29){
+		int i;
+		fputs("\n\t\t\tSTACK\n", file);
+		for(i = GPR[30]; i >= GPR[29]; i--){
+			sprintf(str, "\t\t\t0x%04x -> %d\n", i, memory[i]);
+			fputs(str,file);
+		}
+	}
+	else{
+		wordsQuantity++;
+		int newAddress = (address + offset);
+		if(newAddress > next_free_address)
+			next_free_address = newAddress;	
+	}
+}
+
+
+void sb(int value, int offset, int baseRegister){
+	char str[50];
+	int address = GPR[baseRegister];
+	sprintf(str, " = %d -> (0x%04x + %d) ", value, address, offset);
+	fputs(str,file);
+	memory[address + offset] = (value & getBinaryRange(8, '+'));
+	
+	if(baseRegister == 29){
+		int i;
+		fputs("\n\t\t\tSTACK\n", file);
+		for(i = GPR[30]; i >= GPR[29]; i--){
+			sprintf(str, "\t\t\t0x%04x -> %d\n", i, memory[i]);
+			fputs(str,file);
+		}
+	}
+	else{
+		wordsQuantity++;
+		int newAddress = (address + offset);
+		if(newAddress > next_free_address)
+			next_free_address = newAddress;	
+	}
+}
+
+
+
 void lw(int regist, int offset, int baseRegister){
 	char str[50];
 	int address = GPR[baseRegister];
 	sprintf(str, " = %d <- (0x%04x + %d) ", regist, address, offset);
 	fputs(str,file);
-	GPR[regist]= memory[address + offset];
+	GPR[regist]= memory[address + offset] ;
+	if(baseRegister == 29){
+		int i;
+		fputs("\n\t\t\tSTACK\n", file);
+		for(i = GPR[30]; i >= GPR[29]; i--){
+			sprintf(str, "\t\t\t0x%04x -> %d\n", i, memory[i]);
+			fputs(str,file);
+		}
+	}
+}
+
+
+void lh(int regist, int offset, int baseRegister){
+	char str[50];
+	int address = GPR[baseRegister];
+	sprintf(str, " = %d <- (0x%04x + %d) ", regist, address, offset);
+	fputs(str,file);
+	GPR[regist]= (memory[address + offset] & getBinaryRange(16, '+'));
+	if(baseRegister == 29){
+		int i;
+		fputs("\n\t\t\tSTACK\n", file);
+		for(i = GPR[30]; i >= GPR[29]; i--){
+			sprintf(str, "\t\t\t0x%04x -> %d\n", i, memory[i]);
+			fputs(str,file);
+		}
+	}
+}
+
+
+void lb(int regist, int offset, int baseRegister){
+	char str[50];
+	int address = GPR[baseRegister];
+	sprintf(str, " = %d <- (0x%04x + %d) ", regist, address, offset);
+	fputs(str,file);
+	GPR[regist]= (memory[address + offset] & getBinaryRange(8, '+'));
 	if(baseRegister == 29){
 		int i;
 		fputs("\n\t\t\tSTACK\n", file);
@@ -859,7 +982,7 @@ unsigned int ula_addu(unsigned int op1, unsigned int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(sum > getBinaryRange(32, '+') || sum < getBinaryRange(32, '-')){
+	else if(sum > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -876,7 +999,7 @@ unsigned subu (unsigned int op1, unsigned int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(sub > getBinaryRange(32, '+') || sub < getBinaryRange(32, '-')){
+	else if(sub > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -888,7 +1011,7 @@ int ula_and(int op1, int op2){
 	int ula_and = (op1 & op2);
 	sprintf(str, " = %d and %d = %d", op1, op2, ula_and);
 	fputs(str,file);
-	if(ula_and > getBinaryRange(32, '+') || ula_and < getBinaryRange(32, '-')){
+	if(ula_and > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -904,7 +1027,7 @@ int ula_nor(int op1, int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(ula_nor > getBinaryRange(32, '+') || ula_nor < getBinaryRange(32, '-')){
+	else if(ula_nor > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -920,7 +1043,7 @@ int ula_or(int op1, int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(ula_or > getBinaryRange(32, '+') || ula_or < getBinaryRange(32, '-')){
+	else if(ula_or > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -936,7 +1059,7 @@ int ula_xor(int op1, int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(ula_xor > getBinaryRange(32, '+') || ula_xor < getBinaryRange(32, '-')){
+	else if(ula_xor > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -953,7 +1076,7 @@ unsigned int ula_divu(unsigned int op1, unsigned int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(div > getBinaryRange(32, '+') || div < getBinaryRange(32, '-')){
+	else if(div > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -976,7 +1099,7 @@ unsigned int ula_multu(unsigned int op1, unsigned int op2){
 		flags[0] = 1;
 		fputs(" (Flag zero activated)", file);
 	}
-	else if(mult > getBinaryRange(32, '+') || mult < getBinaryRange(32, '-')){
+	else if(mult > getBinaryRange(32, '+')){
 		flags[3] = 1;
 		fputs(" (Flag overflow activated)", file);
 	}
@@ -1046,3 +1169,161 @@ void jalr(int rd, int rs){
 	GPR[rd] = PC;
 	PC = GPR[rs];
 }
+
+
+void lui(int op1, int op2){
+	char str[50];
+	GPR[op1] = op2;
+	GPR[op1] = GPR[op1] << 16;
+	sprintf(str, "%d = %d << 16 ", op1, op2);
+	fputs(str,file);
+}
+
+void ula_seh(int op1, int op2){
+	char str[50];
+	GPR[op1] = op2;
+	GPR[op1] = (GPR[op1] & getBinaryRange(16, '+'));
+	sprintf(str, "%d = %d << 16 ", op1, op2);
+	fputs(str,file);
+}
+
+void ula_seb(int op1, int op2){
+	char str[50];
+	GPR[op1] = op2;
+	GPR[op1] = (GPR[op1] & getBinaryRange(8, '+'));
+	sprintf(str, "%d = %d << 24 ", op1, op2);
+	fputs(str,file);
+	
+}
+
+unsigned int ula_subu( unsigned int op1, unsigned int op2){
+	unsigned int sub = op1 - op2;
+	char str[50];
+	sprintf(str, "= %d - %d = %d", op1, op2, sub);
+	fputs(str,file);
+	//Check flag conditions
+	if(sub == 0){
+		flags[0] = 1;
+		fputs(" (Flag zero activated)", file);
+	}
+	else if(sub > getBinaryRange(32, '+')){
+		flags[3] = 1;
+		fputs(" (Flag overflow activated)", file);
+	}
+	return sub;
+}
+
+void madd(int op1, int op2){
+	long long int produt = op1 * op2;
+	char str[50];
+
+	if(produt < getBinaryRange(32, '+')){
+		sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+		fputs(str,file);
+		LO += produt;
+		HI = 0;
+	}else{	
+	LO += (produt & 4294967295);
+	HI += (produt >> 32);	
+	sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+	fputs(str,file);
+	}
+}
+
+void maddu(unsigned int op1, unsigned int op2){
+	
+	long long unsigned int produt = op1 * op2;
+	char str[50];
+	if(produt < getBinaryRange(32, '+')){
+		sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+		fputs(str,file);
+		LO += produt;
+		HI = 0;
+	}else{	
+	LO += (produt & 4294967295);
+	HI += (produt >> 32);	
+	sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+	fputs(str,file);
+	}
+}
+
+
+void msubu(unsigned int op1, unsigned int op2){
+	
+	long long unsigned int produt = op1 * op2;
+	char str[50];
+
+	if(produt < getBinaryRange(32, '+')){
+		sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+		fputs(str,file);
+		LO -= produt;
+		HI = 0;
+	}else{	
+	LO -= (produt & 4294967295);
+	HI -= (produt >> 32);	
+	sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+	fputs(str,file);
+	}
+}
+
+void msub(int op1, int op2){
+	
+	long long int produt = op1 * op2;
+	char str[50];
+
+	if(produt < getBinaryRange(32, '+')){
+		sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+		fputs(str,file);
+		LO -= produt;
+		HI = 0;
+	}else{	
+	LO -= (produt & 4294967295);
+	HI -= (produt >> 32);	
+	sprintf(str, " %d * %d = %d -> HI = 0, LO = %d",op1, op2, produt, produt);
+	fputs(str,file);
+	}
+}
+
+int rotr(int op2, int offset){
+	int temp1;
+	int temp2 = (op2 & getBinaryRange(offset, '+'));
+	
+	temp2 = temp2 << (32 - offset); 
+	
+	op2 = op2  >> offset;
+	
+	temp1 = temp2 | op2;
+	
+	return temp1;
+	
+}
+
+int rotrv(int op2, int op3){
+	int temp1;
+	int temp2 = (op2 & getBinaryRange(op3, '+'));
+	
+	
+	temp2 = temp2 << (32 - op3); 
+	op2 = op2  >> op3;
+	
+	temp1 = temp2 | op2;
+	
+	return temp1;
+}
+
+
+void bgtz(int op1, int offset){
+	
+	if(op1 > 0){
+		PC = PC + offset;
+	}
+}
+
+void bltz(int op1, int offset){
+	
+	if(op1 < 0){
+		PC = PC + offset;
+	}
+}
+
+
